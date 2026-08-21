@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#faf7f2">
+  <title>{% block title %}我们的故事{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen">
+  {% block body %}{% endblock %}
+
+  <!-- Flash 消息 -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div x-data="{show: true}" x-show="show" x-transition.opacity.duration.200ms
+         class="fixed top-4 inset-x-0 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none">
+      {% for category, message in messages %}
+      <div class="px-5 py-3 rounded-full shadow-lg text-sm font-medium pointer-events-auto
+                  {{ 'bg-ink text-white' if category == 'error' else 'bg-emerald-500 text-white' }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <script src="{{ url_for('static', filename='js/alpine.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v=3" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

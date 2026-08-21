@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ timeline.name }} · 我们的故事{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-32 relative" x-data="{ openAdd: false }">
+
+  <!-- 顶部标题（手账风格） -->
+  <header class="text-center mb-14">
+    <h1 class="font-serif text-4xl sm:text-5xl font-medium tracking-wide text-ink">{{ timeline.name }}</h1>
+    <div class="mt-4 flex items-center justify-center gap-3 text-ink-mute">
+      <span class="w-10 h-px bg-ink/15"></span>
+      <p class="text-sm font-hand tracking-widest">一起走过的日子</p>
+      <span class="w-10 h-px bg-ink/15"></span>
+    </div>
+  </header>
+
+  <!-- 时间轴容器 -->
+  <div class="relative timeline-line">
+    <div class="space-y-16">
+      {% set ns = namespace(last_month='') %}
+      {% for event in events %}
+        {% set cur_month = event.event_date[0:7] %}
+        {% if cur_month != ns.last_month %}
+          {% set ns.last_month = cur_month %}
+          <!-- 月份粘滞锚点 -->
+          <div class="sticky-month flex justify-center md:justify-start md:pl-[calc(50%+1.5rem)] mb-10 -mt-4">
+            <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cream/90 backdrop-blur-sm
+                         border border-ink/5 shadow-sm text-sm text-ink-soft tracking-widest">
+              {{ cur_month[0:4] }} 年 {{ cur_month[5:7] }} 月
+            </span>
+          </div>
+        {% endif %}
+
+        <!-- 时间轴节点（奇左偶右 Zig-Zag） -->
+        <div class="timeline-item group relative flex items-start {{ 'md:flex-row' if loop.index0 % 2 == 0 else 'md:flex-row-reverse' }}">
+
+          <!-- 轴上节点圆点 -->
+          <div class="timeline-dot absolute left-[7px] md:left-1/2 -translate-x-1/2 top-8
+                      w-4 h-4 rounded-full z-10"></div>
+
+          <!-- 卡片容器（手机单列全宽；桌面奇左偶右） -->
+          <div class="w-full pl-8 md:pl-0 {{ 'md:w-[calc(50%-2.5rem)] md:mr-auto md:text-left' if loop.index0 % 2 == 0 else 'md:w-[calc(50%-2.5rem)] md:ml-auto md:text-left' }}">
+            <a href="{{ url_for('event.detail', event_id=event.id) }}"
+               class="polaroid {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }} block rounded-2xl p-4 sm:p-5 active:scale-[0.98]">
+
+              <!-- 封面图（内嵌圆角） -->
+              <div class="img-frame mb-3">
+                <div class="relative aspect-[16/10] overflow-hidden bg-warm">
+                  {% if event.cover_photo %}
+                  <img src="{{ url_for('photo.serve_thumb', photo_id=event.cover_photo) }}"
+                       alt="{{ event.title }}"
+                       loading="lazy"
+                       class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
+                  {% else %}
+                  <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-4xl opacity-30">📷</span>
+                  </div>
+                  {% endif %}
+
+                  <!-- 照片张数玻璃徽章 -->
+                  <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-full
+                              text-[11px] text-white/90 font-medium tracking-wide flex items-center gap-1">
+                    <span>{{ event.photo_count }}P</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 信息（手账排版） -->
+              <div class="px-1 pb-1">
+                <div class="flex items-baseline justify-between gap-2 mb-1">
+                  <h2 class="font-serif text-lg text-ink font-medium tracking-tight line-clamp-1">{{ event.title }}</h2>
+                  <time class="font-hand text-sm text-ink-mute shrink-0">
+                    {{ event.event_date[5:7] }}.{{ event.event_date[8:10] }}
+                  </time>
+                </div>
+                {% if event.location %}
+                <p class="mt-1 text-xs text-ink-mute flex items-center gap-1">
+                  <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <circle cx="12" cy="11" r="2.5"/>
+                  </svg>
+                  <span class="truncate">{{ event.location }}</span>
+                </p>
+                {% endif %}
+              </div>
+            </a>
+          </div>
+        </div>
+      {% else %}
+      <!-- 空状态 -->
+      <div class="py-24 text-center">
+        <div class="text-6xl mb-5 opacity-40">🌱</div>
+        <p class="font-hand text-lg text-ink-mute">还没有回忆，点击右下角 + 开始记录</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 新增 FAB -->
+  <button @click="openAdd = true"
+          class="fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-ink text-white
+                 shadow-[0_12px_30px_rgba(43,43,43,0.3)] flex items-center justify-center
+                 active:scale-90 transition-transform duration-150">
+    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <path d="M12 5v14M5 12h14"></path>
+    </svg>
+  </button>
+
+  <!-- 退出 -->
+  <div class="fixed top-4 right-4 z-40">
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit"
+              class="text-xs text-ink-mute hover:text-ink/60 px-3 py-2 rounded-full bg-white/60 backdrop-blur">退出</button>
+    </form>
+  </div>
+
+  <!-- 新增回忆 Bottom Sheet -->
+  {% include "partials/add_sheet.html" %}
+</div>
+
+{% endblock %}

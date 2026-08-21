@@ -1,0 +1,68 @@
+{# 上传照片 Bottom Sheet —— Alpine 上滑过渡 #}
+<div id="upload-sheet"
+     x-show="openUpload"
+     x-transition.opacity.duration.200ms
+     x-cloak
+     class="fixed inset-0 z-50">
+
+  <!-- 遮罩 -->
+  <div class="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+       x-show="openUpload"
+       x-transition.opacity.duration.200ms
+       @click="openUpload = false"></div>
+
+  <!-- 面板 -->
+  <div class="absolute bottom-0 inset-x-0 bg-paper rounded-t-[2.5rem] shadow-2xl max-h-[85vh] overflow-y-auto"
+       x-show="openUpload"
+       x-transition:enter="transition ease-out duration-400"
+       x-transition:enter-start="translate-y-full"
+       x-transition:enter-end="translate-y-0"
+       x-transition:leave="transition ease-in duration-250"
+       x-transition:leave-start="translate-y-0"
+       x-transition:leave-end="translate-y-full"
+       style="padding-bottom: env(safe-area-inset-bottom, 0px)">
+
+    <!-- 拖拽条 -->
+    <div class="pt-4 pb-2 flex items-center justify-center">
+      <div class="w-10 h-1.5 rounded-full bg-ink/15"></div>
+    </div>
+
+    <h2 class="px-6 font-serif text-xl font-medium text-ink">上传照片</h2>
+
+    <form method="post" action="{{ url_for('photo.upload', event_id=event.id) }}"
+          class="px-6 py-4 space-y-4"
+          enctype="multipart/form-data"
+          onsubmit="return handleUpload(event)">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <!-- 选择区 -->
+      <label for="upload-photos"
+             class="flex flex-col items-center justify-center h-28 rounded-2xl border-2 border-dashed border-ink/15
+                    bg-cream-deep/50 cursor-pointer transition hover:border-accent/60">
+        <span class="text-3xl">📷</span>
+        <span class="text-xs text-ink-mute mt-1">选择照片，可多选</span>
+      </label>
+      <input type="file" name="photos" id="upload-photos" multiple accept="image/*"
+             data-preview-target="#upload-preview" class="hidden">
+
+      <!-- 预览网格 -->
+      <div id="upload-preview" class="grid grid-cols-3 gap-2"></div>
+
+      <!-- 上传进度 -->
+      <div id="upload-progress" class="hidden">
+        <div class="flex items-center gap-3">
+          <div class="flex-1 h-2 rounded-full bg-ink/10 overflow-hidden">
+            <div id="progress-bar" class="h-full bg-accent rounded-full transition-all duration-300" style="width:0%"></div>
+          </div>
+          <span id="progress-text" class="text-xs text-ink-soft">0%</span>
+        </div>
+      </div>
+
+      <button type="submit" id="upload-btn"
+              class="w-full py-4 rounded-2xl bg-accent text-white font-medium
+                     active:scale-[0.98] transition-transform">
+        开始上传
+      </button>
+    </form>
+  </div>
+</div>

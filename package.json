@@ -1,0 +1,14 @@
+{
+  "name": "double-date-memory",
+  "version": "1.0.0",
+  "description": "私人共享回忆时间轴 —— 我们的故事",
+  "private": true,
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/app.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.1.7"
+  }
+}

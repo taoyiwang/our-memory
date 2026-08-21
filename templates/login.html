@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}进入 · 我们的故事{% endblock %}
+
+{% block head %}
+<style>
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes floatUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .anim-bg    { animation: fadeIn 1.2s ease-out both; }
+  .anim-title { animation: floatUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both; }
+  .anim-input { animation: floatUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s both; }
+  .anim-lock  { animation: floatUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="anim-bg min-h-screen flex items-center justify-center px-6"
+     style="background: linear-gradient(160deg, #fdf6ec 0%, #f7efe6 45%, #f3e7da 100%);">
+
+  <div class="w-full max-w-sm text-center">
+
+    <!-- 锁图标 -->
+    <div class="anim-lock mb-6">
+      <div class="mx-auto w-16 h-16 rounded-[1.5rem] bg-white/70 backdrop-blur card-shadow flex items-center justify-center">
+        <svg viewBox="0 0 24 24" class="w-7 h-7 text-amber-600/80" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="3"></rect>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 标题 -->
+    <h1 class="anim-title text-4xl font-semibold tracking-wide text-ink mb-3">
+      {{ timeline.name if timeline else '我们的故事' }}
+    </h1>
+    <p class="anim-title text-base text-ink/50 mb-12" style="animation-delay:.35s">
+      记录我们一起经历的时光
+    </p>
+
+    <!-- 输入框 -->
+    <form method="post" class="anim-input space-y-4" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="password" name="password" inputmode="text"
+             placeholder="输入访问密码"
+             autofocus
+             class="w-full h-14 px-6 rounded-2xl bg-white/80 backdrop-blur border border-white/60
+                    card-shadow text-center text-lg tracking-[0.3em] placeholder:tracking-normal
+                    placeholder:text-ink/30 outline-none focus:ring-2 focus:ring-amber-400/50 transition">
+
+      <button type="submit"
+              class="w-full h-14 rounded-2xl bg-ink text-white text-base font-medium
+                     active:scale-[0.98] transition-transform duration-150
+                     shadow-[0_10px_30px_rgba(43,43,43,0.25)]">
+        进入
+      </button>
+    </form>
+
+    <!-- 脚注 -->
+    <p class="anim-input mt-10 text-xs text-ink/35" style="animation-delay:.75s">
+      只有我们知道这里的密码
+    </p>
+  </div>
+</div>
+{% endblock %}

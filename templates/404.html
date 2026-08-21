@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}页面不存在{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+  <div class="text-6xl mb-4">🕰️</div>
+  <h1 class="text-2xl font-semibold text-ink">这段回忆不存在</h1>
+  <p class="mt-2 text-ink/50">它可能已被删除，或者链接有误</p>
+  <a href="{{ url_for('timeline.index') }}"
+     class="mt-8 px-8 py-3 rounded-2xl bg-ink text-white font-medium active:scale-95 transition-transform">
+    回到时间轴
+  </a>
+</div>
+{% endblock %}

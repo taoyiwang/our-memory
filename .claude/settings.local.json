@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Bash(npm --version)",
+      "Bash(npm ping *)",
+      "Bash(python -m venv venv)",
+      "Bash(./venv/Scripts/python.exe --version)",
+      "Bash(./venv/Scripts/pip.exe install *)",
+      "Bash(npm install *)"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}出错了{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+  <div class="text-6xl mb-4">💭</div>
+  <h1 class="text-2xl font-semibold text-ink">{{ code or '出错了' }}</h1>
+  <p class="mt-2 text-ink/50">{{ message or '发生了一些问题，请重试' }}</p>
+  <a href="{{ url_for('timeline.index') }}"
+     class="mt-8 px-8 py-3 rounded-2xl bg-ink text-white font-medium active:scale-95 transition-transform">
+    回到时间轴
+  </a>
+</div>
+{% endblock %}

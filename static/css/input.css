@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/* 扫描源：模板与前端 JS */
+@source "../../templates/**/*.html";
+@source "../../static/js/**/*.js";
+
+/* 设计系统：我们的故事
+   大留白 · 大圆角 · 柔和阴影 · 微动画
+   拍立得 / 手账风 · 陶土橘强调色 */
+@theme {
+  --color-cream: #fdfbf7;
+  --color-cream-deep: #f8f5ee;
+  --color-warm: #f6efe6;
+  --color-ink: #2b2b2b;
+  --color-ink-soft: #57534e;   /* stone-600 */
+  --color-ink-mute: #a8a29e;   /* stone-400 */
+  --color-accent: #d97d54;     /* 陶土橘 */
+  --color-accent-soft: #c86d51;/* 焦糖棕（hover/深） */
+  --color-paper: #fcfaf6;      /* 拍立得纸白 */
+
+  --font-serif: "Songti SC", "Noto Serif SC", "STSong", serif;
+  --font-hand: "Kaiti SC", "STKaiti", "KaiTi", serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  min-height: 100vh;
+}
+
+/* 细腻弥散阴影 —— 精致漂浮感 */
+.card-shadow {
+  box-shadow:
+    0 12px 32px -4px rgba(43, 30, 22, 0.06),
+    0 4px 12px -2px rgba(43, 30, 22, 0.03);
+}
+.card-shadow-lg {
+  box-shadow:
+    0 24px 48px -12px rgba(43, 30, 22, 0.12),
+    0 8px 20px -6px rgba(43, 30, 22, 0.05);
+}
+
+/* 拍立得卡片 */
+.polaroid {
+  background: var(--color-paper);
+  border: 1px solid rgba(43, 30, 22, 0.04);
+  box-shadow:
+    0 12px 32px -4px rgba(43, 30, 22, 0.08),
+    0 4px 12px -2px rgba(43, 30, 22, 0.04);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.polaroid:hover {
+  transform: translateY(-6px) scale(1.02) rotate(0deg) !important;
+  box-shadow:
+    0 24px 48px -12px rgba(43, 30, 22, 0.16),
+    0 8px 20px -6px rgba(43, 30, 22, 0.07);
+}
+/* 微旋转：随机感（奇数左旋，偶数右旋） */
+.tilt-left  { transform: rotate(-0.8deg); }
+.tilt-right { transform: rotate(0.8deg); }
+
+/* Alpine 初始化前隐藏 x-show 元素 */
+[x-cloak] { display: none !important; }
+
+/* 安全区适配 */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+}
+
+/* 时间轴中轴线 */
+.timeline-line::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, transparent, rgba(168, 162, 158, 0.35) 8%, rgba(168, 162, 158, 0.35) 92%, transparent);
+}
+@media (max-width: 767px) {
+  .timeline-line::before { left: 7px; transform: none; }
+}
+
+/* 时间轴节点圆点：陶土橘 + 呼吸光晕 */
+.timeline-dot {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-cream);
+}
+.timeline-dot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(217, 125, 84, 0.35) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.group:hover .timeline-dot::after { opacity: 1; }
+
+/* 粘滞月份锚点 */
+.sticky-month {
+  position: sticky;
+  top: 1rem;
+  z-index: 20;
+}
+
+/* 滚动视差入场（IntersectionObserver 驱动） */
+.timeline-item {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.timeline-item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 图片内嵌圆角容器 */
+.img-frame {
+  padding: 6px;
+  background: var(--color-paper);
+}
+.img-frame img {
+  border-radius: 0.9rem;
+}

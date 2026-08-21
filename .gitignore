@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Node
+node_modules/
+
+# 运行时数据：私人照片与数据库，绝不入库
+data/photos/
+data/*.db
+data/*.png
+data/*.py
+
+# 日志
+logs/
+
+# 环境变量（含生产密钥，勿提交）
+.env
+deploy/.env
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+*.swp
+
+# Windows 下误生成文件
+nul
