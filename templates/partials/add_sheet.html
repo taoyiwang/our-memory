@@ -30,9 +30,16 @@
 
     <h2 class="px-6 font-serif text-xl font-medium text-ink">新增回忆</h2>
 
-    <form method="post" action="{{ url_for('event.new') }}" class="px-6 py-4 space-y-4"
-          enctype="multipart/form-data">
+    <form method="post" action="{{ url_for('event.new') }}" class="relative px-6 py-4 space-y-4"
+          enctype="multipart/form-data" x-data="{ saving: false }" @submit="saving = true">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <!-- Loading 遮罩 -->
+      <div x-show="saving" x-cloak
+           class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-paper/90 backdrop-blur-sm rounded-t-[2.5rem]">
+        <div class="loading-spinner mb-4"></div>
+        <p class="font-hand text-sm text-ink-soft tracking-wider">保存中…</p>
+      </div>
 
       <!-- 日期 -->
       <div>
@@ -83,8 +90,10 @@
       </div>
 
       <button type="submit"
+              :disabled="saving"
               class="w-full h-13 py-4 rounded-2xl bg-accent text-white font-medium
-                     active:scale-[0.98] transition-transform duration-150 shadow-[0_10px_30px_rgba(217,125,84,0.3)]">
+                     active:scale-[0.98] transition-transform duration-150 shadow-[0_10px_30px_rgba(217,125,84,0.3)]
+                     disabled:opacity-60 disabled:cursor-wait">
         保存回忆
       </button>
     </form>

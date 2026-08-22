@@ -165,3 +165,16 @@ body {
 .img-frame img {
   border-radius: 0.9rem;
 }
+
+/* 提交 Loading 动画 */
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-ink-mute);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
