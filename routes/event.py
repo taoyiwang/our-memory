@@ -51,8 +51,8 @@ def new():
         if not f or not f.filename:
             continue
         try:
-            filename, thumbnail = image_service.save_upload(f, event_id)
-            create_photo(event_id, filename, thumbnail)
+            filename, thumbnail, original = image_service.save_upload(f, event_id)
+            create_photo(event_id, filename, thumbnail, original)
             saved += 1
         except ValueError as e:
             flash(str(e), "error")

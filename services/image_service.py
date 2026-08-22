@@ -55,11 +55,11 @@ def _convert(img: Image.Image, quality: int, max_side) -> io.BytesIO:
     return buf
 
 
-def save_upload(file_storage, event_id: int) -> tuple[str, str]:
+def save_upload(file_storage, event_id: int) -> tuple[str, str, str]:
     """处理一张上传照片。
 
-    返回 (filename, thumbnail) —— 存储于 event 目录下的相对文件名。
-    保存两个文件：全尺寸 WebP 与缩略图 WebP。
+    返回 (filename, thumbnail, original) —— 存储于 event 目录下的相对文件名。
+    保存三个文件：原始文件、全尺寸 WebP、缩略图 WebP。
     """
     if not allowed_file(file_storage.filename or ""):
         raise ValueError("不支持的图片格式")
@@ -75,7 +75,13 @@ def save_upload(file_storage, event_id: int) -> tuple[str, str]:
     event_dir = _ensure_event_dir(event_id)
     base_name = f"{uuid.uuid4().hex}"
 
-    # 全尺寸图
+    # 原始文件（保留原始格式，用于下载）
+    orig_ext = os.path.splitext(file_storage.filename)[1].lower()
+    orig_name = f"{base_name}_orig{orig_ext}"
+    file_storage.stream.seek(0)
+    img.save(os.path.join(event_dir, orig_name), format=img.format or "JPEG")
+
+    # 全尺寸 WebP
     full = _convert(img, config.IMAGE_QUALITY, config.FULL_SIZE)
     full_name = f"{base_name}.webp"
     with open(os.path.join(event_dir, full_name), "wb") as f:
@@ -87,7 +93,7 @@ def save_upload(file_storage, event_id: int) -> tuple[str, str]:
     with open(os.path.join(event_dir, thumb_name), "wb") as f:
         f.write(thumb.getvalue())
 
-    return full_name, thumb_name
+    return full_name, thumb_name, orig_name
 
 
 def delete_event_photos(event_id: int) -> None:

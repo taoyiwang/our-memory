@@ -14,7 +14,10 @@
       "Bash(pip install *)",
       "Bash(D:/projects/double-date-memory/venv/Scripts/python.exe *)",
       "Bash(D:/projects/double-date-memory/venv/Scripts/pip.exe install *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl *)"
     ]
   }
 }

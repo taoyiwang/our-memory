@@ -9,6 +9,7 @@ PHOTO_DIR = os.path.join(DATA_DIR, "photos")
 DB_PATH = os.path.join(DATA_DIR, "timeline.db")
 
 # 确保数据目录存在
+os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(PHOTO_DIR, exist_ok=True)
 
 # 访问密码（部署时通过环境变量注入）

@@ -4,13 +4,13 @@ import os
 from database import get_db, now
 
 
-def create_photo(event_id: int, filename: str, thumbnail: str) -> int:
+def create_photo(event_id: int, filename: str, thumbnail: str, original: str = "") -> int:
     """保存一条照片记录，返回 photo id。"""
     conn = get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO photo (event_id, filename, thumbnail, created_at) VALUES (?, ?, ?, ?)",
-            (event_id, filename, thumbnail, now()),
+            "INSERT INTO photo (event_id, filename, thumbnail, original, created_at) VALUES (?, ?, ?, ?, ?)",
+            (event_id, filename, thumbnail, original, now()),
         )
         conn.commit()
         return cur.lastrowid

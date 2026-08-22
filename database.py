@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS photo (
     event_id   INTEGER NOT NULL REFERENCES event(id),
     filename   TEXT    NOT NULL,
     thumbnail  TEXT    NOT NULL,
+    original   TEXT    DEFAULT '',
     created_at TEXT    NOT NULL
 );
 """

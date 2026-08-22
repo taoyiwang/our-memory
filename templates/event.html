@@ -134,6 +134,16 @@
       <path d="M18 6L6 18M6 6l12 12"></path>
     </svg>
   </button>
+  <!-- 下载按钮 -->
+  <a id="lb-download" href="#" download
+     class="absolute top-4 right-16 z-10 w-10 h-10 rounded-full bg-white/10 text-white
+            flex items-center justify-center backdrop-blur active:scale-90 transition-transform">
+    <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+  </a>
   <div class="h-full flex items-center justify-center px-4" style="overflow: hidden;">
     <img id="lightbox-img" src="" alt="" class="max-h-full max-w-full object-contain lb-enter" style="touch-action: manipulation;">
   </div>
@@ -164,9 +174,12 @@ let lbTouchStartY = 0;
 let isZoomed = false;
 let lbZoomLevel = 1;
 
+let lightboxPhotoIds = [];
+
 function openLightbox(img) {
   const items = Array.from(document.querySelectorAll('img[data-full]'));
   lightboxPhotos = items.map(i => i.dataset.full);
+  lightboxPhotoIds = items.map(i => i.dataset.photoId || '');
   lightboxIndex = items.indexOf(img);
   if (lightboxIndex === -1) lightboxIndex = 0;
   showLb();
@@ -181,6 +194,11 @@ function showLb() {
   img.src = lightboxPhotos[lightboxIndex];
   resetZoom(img);
   document.getElementById('lb-counter').textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
+  // 更新下载链接
+  var dl = document.getElementById('lb-download');
+  if (dl && lightboxPhotoIds[lightboxIndex]) {
+    dl.href = '/photo/' + lightboxPhotoIds[lightboxIndex] + '/download';
+  }
 }
 
 function resetZoom(img) {
