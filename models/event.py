@@ -102,6 +102,19 @@ def list_events(timeline_id: int):
         conn.close()
 
 
+def update_event(event_id: int, title: str, event_date: str, location: str, content: str) -> None:
+    """更新事件信息。"""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE event SET title = ?, event_date = ?, location = ?, content = ? WHERE id = ?",
+            (title, event_date, location, content, event_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def delete_event(event_id: int) -> None:
     """删除事件（照片由调用方负责删除文件）。"""
     conn = get_db()

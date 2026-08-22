@@ -5,7 +5,7 @@ from datetime import date
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 import config
-from models.event import create_event, delete_event, get_event
+from models.event import create_event, delete_event, get_event, update_event
 from models.photo import create_photo, list_photos
 from models.timeline import get_timeline
 from routes.guard import login_required
@@ -74,3 +74,36 @@ def delete(event_id):
     shutil.rmtree(f"{config.PHOTO_DIR}/event_{event_id}", ignore_errors=True)
     delete_event(event_id)
     return redirect(url_for("timeline.index"))
+
+
+@bp.route("/event/<int:event_id>/edit")
+@login_required
+def edit(event_id):
+    event = get_event(event_id)
+    if event is None:
+        abort(404)
+    return render_template("event_edit.html", event=event)
+
+
+@bp.route("/event/<int:event_id>/update", methods=["POST"])
+@login_required
+def update(event_id):
+    event = get_event(event_id)
+    if event is None:
+        abort(404)
+
+    title = request.form.get("title", "").strip()
+    event_date = request.form.get("event_date", "").strip()
+    location = request.form.get("location", "").strip()
+    content = request.form.get("content", "").strip()
+
+    if not title:
+        flash("标题不能为空", "error")
+        return redirect(url_for("event.edit", event_id=event_id))
+    if not event_date:
+        flash("请选择日期", "error")
+        return redirect(url_for("event.edit", event_id=event_id))
+
+    update_event(event_id, title, event_date, location, content)
+    flash("回忆已更新", "success")
+    return redirect(url_for("event.detail", event_id=event_id))

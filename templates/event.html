@@ -107,6 +107,14 @@
                        active:scale-[0.98] transition-transform">
           上传照片
         </button>
+        <a href="{{ url_for('event.edit', event_id=event.id) }}"
+           class="w-12 h-12 rounded-2xl bg-white border border-ink/10 flex items-center justify-center
+                  text-ink-mute active:scale-90 transition-transform">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </a>
         <button onclick="if(confirm('删除这个回忆吗？'))document.getElementById('delete-event-form').submit()"
                 class="w-12 h-12 rounded-2xl bg-white border border-ink/10 flex items-center justify-center
                        text-ink-mute active:scale-90 transition-transform">
