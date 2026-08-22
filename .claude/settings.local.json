@@ -17,7 +17,9 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(sed -i '/var lbZoomLevel = 1;/d' templates/event.html)",
+      "Bash(sed -i '/var lbImg = document.getElementById/d' templates/event.html)"
     ]
   }
 }

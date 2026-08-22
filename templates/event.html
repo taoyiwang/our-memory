@@ -175,7 +175,6 @@ let isZoomed = false;
 let lbZoomLevel = 1;
 
 let lightboxPhotoIds = [];
-var lbImg = document.getElementById('lightbox-img');
 
 function openLightbox(img) {
   const items = Array.from(document.querySelectorAll('img[data-full]'));
@@ -249,7 +248,6 @@ lbImg.addEventListener('dblclick', function(e) {
 });
 
 // ── 鼠标滚轮缩放（桌面端） ──
-var lbZoomLevel = 1;
 lbImg.addEventListener('wheel', function(e) {
   e.preventDefault();
   var delta = e.deltaY > 0 ? -0.3 : 0.3;
@@ -263,7 +261,6 @@ lbImg.addEventListener('wheel', function(e) {
 // ── 手势：双指捏合缩放 ──
 var pinchStartDist = 0;
 var pinchStartScale = 1;
-var lbImg = document.getElementById('lightbox-img');
 
 lbImg.addEventListener('touchstart', function(e) {
   if (e.touches.length === 2) {
