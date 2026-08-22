@@ -72,11 +72,46 @@
     </div>
     {% endif %}
 
+    <!-- 批量操作栏 -->
+    <div class="flex items-center justify-between mt-4 px-2" x-data="{ selectMode: false, selected: [] }" x-init="window.__photoSelect = selected">
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-1.5 text-sm text-ink-mute cursor-pointer select-none">
+          <input type="checkbox" x-model="selectMode" @change="if(!selectMode){selected=[];document.querySelectorAll('.photo-checkbox').forEach(c=>c.checked=false)}" class="w-4 h-4 rounded border-ink/20 text-accent focus:ring-0">
+          <span>选择模式</span>
+        </label>
+        <button x-show="selectMode && selected.length > 0"
+                @click="if(confirm('确定删除选中的 '+selected.length+' 张照片吗？')){document.getElementById('batch-delete-form').querySelectorAll('input[name=photo_ids]').forEach(el=>el.remove());selected.forEach(id=>{let inp=document.createElement('input');inp.type='hidden';inp.name='photo_ids';inp.value=id;document.getElementById('batch-delete-form').appendChild(inp)});document.getElementById('batch-delete-form').submit()}"
+                class="text-sm px-3 py-1.5 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition">
+          删除所选 ({{ '{{ selected.length }}' }})
+        </button>
+      </div>
+      <span x-show="selectMode" class="text-xs text-ink-mute" x-text="selected.length + ' 张已选'"></span>
+    </div>
+    <form id="batch-delete-form" method="post" action="{{ url_for('photo.batch_delete', event_id=event.id) }}" class="hidden">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    </form>
+
     <!-- 照片瀑布流（拍立得风格：图内嵌圆角 + 白边） -->
-    <div class="masonry mt-8">
+    <div class="masonry mt-4">
       {% for photo in photos %}
-      <div class="masonry-item polaroid rounded-2xl p-2 {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }}"
+      <div class="masonry-item polaroid rounded-2xl p-2 {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }} relative group"
            style="--i: {{ loop.index0 }}">
+        <!-- 选择模式复选框 -->
+        <div class="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity photo-checkbox-wrapper" x-data="{ selectMode: window.__photoSelect ? window.__photoSelect.__x?.selectMode : false }" x-init="$watch('selectMode', val => { if(!val) $el.querySelector('.photo-checkbox').checked = false })">
+          <input type="checkbox" class="photo-checkbox w-4 h-4 rounded border-white/60 bg-ink/40 text-accent focus:ring-0"
+                 data-photo-id="{{ photo.id }}"
+                 x-model="window.__photoSelect"
+                 :checked="window.__photoSelect && window.__photoSelect.includes({{ photo.id }})"
+                 @change="if($event.target.checked){if(!window.__photoSelect.includes({{ photo.id }})) window.__photoSelect.push({{ photo.id }})}else{window.__photoSelect=window.__photoSelect.filter(id=>id!=={{ photo.id }})}">
+        </div>
+        <!-- 单张删除按钮 -->
+        <button onclick="if(confirm('确定删除这张照片吗？')){document.getElementById('delete-form-{{ photo.id }}').submit()}"
+                class="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-ink/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <form id="delete-form-{{ photo.id }}" method="post" action="{{ url_for('photo.delete', photo_id=photo.id) }}" class="hidden">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        </form>
         <img src="{{ url_for('photo.serve_thumb', photo_id=photo.id) }}"
              data-full="{{ url_for('photo.serve', photo_id=photo.id) }}"
              data-photo-id="{{ photo.id }}"

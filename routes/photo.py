@@ -116,3 +116,45 @@ def delete(photo_id):
 
     next_url = request.referrer or url_for("event.detail", event_id=event_id)
     return redirect(next_url)
+
+
+@bp.route("/event/<int:event_id>/photos/delete", methods=["POST"])
+@login_required
+def batch_delete(event_id):
+    """批量删除照片。"""
+    event = get_event(event_id)
+    if event is None:
+        abort(404)
+
+    photo_ids = request.form.getlist("photo_ids")
+    if not photo_ids:
+        flash("请选择要删除的照片", "error")
+        return redirect(url_for("event.detail", event_id=event_id))
+
+    # 转为整数，过滤无效ID
+    photo_ids = [int(pid) for pid in photo_ids if pid.isdigit()]
+    if not photo_ids:
+        flash("无效的照片ID", "error")
+        return redirect(url_for("event.detail", event_id=event_id))
+
+    deleted = 0
+    event_dir = os.path.join(config.PHOTO_DIR, f"event_{event_id}")
+    for pid in photo_ids:
+        photo = get_photo(pid)
+        if photo is None or photo["event_id"] != event_id:
+            continue
+        # 删除文件
+        for name in (photo["filename"], photo["thumbnail"], photo["original"] or ""):
+            if not name:
+                continue
+            path = os.path.join(event_dir, name)
+            if os.path.isfile(path):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+        delete_photo(pid)
+        deleted += 1
+
+    flash(f"已删除 {deleted} 张照片", "success" if deleted else "error")
+    return redirect(url_for("event.detail", event_id=event_id))
