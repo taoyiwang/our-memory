@@ -134,8 +134,8 @@
       <path d="M18 6L6 18M6 6l12 12"></path>
     </svg>
   </button>
-  <div class="h-full flex items-center justify-center px-4">
-    <img id="lightbox-img" src="" alt="" class="max-h-full max-w-full object-contain lb-enter">
+  <div class="h-full flex items-center justify-center px-4" style="overflow: hidden;">
+    <img id="lightbox-img" src="" alt="" class="max-h-full max-w-full object-contain lb-enter" style="touch-action: manipulation;">
   </div>
   <!-- 左右切换 -->
   <button id="lb-prev" onclick="lbNav(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white backdrop-blur flex items-center justify-center">‹</button>
@@ -143,6 +143,13 @@
 
   <!-- 照片索引 -->
   <div class="absolute top-4 left-4 z-10 text-white/70 text-sm bg-ink/30 rounded-full px-3 py-1 backdrop-blur" id="lb-counter"></div>
+
+  <!-- 缩放按钮 -->
+  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+    <button onclick="lbZoom(-0.5)" class="w-9 h-9 rounded-full bg-white/15 text-white backdrop-blur flex items-center justify-center text-lg active:scale-90 transition-transform">−</button>
+    <button onclick="lbZoom(0.5)" class="w-9 h-9 rounded-full bg-white/15 text-white backdrop-blur flex items-center justify-center text-lg active:scale-90 transition-transform">+</button>
+    <button onclick="lbZoom(0)" class="w-9 h-9 rounded-full bg-white/15 text-white backdrop-blur flex items-center justify-center text-sm active:scale-90 transition-transform">1:1</button>
+  </div>
 </div>
 
 {% endblock %}
@@ -155,6 +162,7 @@ let lightboxIndex = 0;
 let lbTouchStartX = 0;
 let lbTouchStartY = 0;
 let isZoomed = false;
+let lbZoomLevel = 1;
 
 function openLightbox(img) {
   const items = Array.from(document.querySelectorAll('img[data-full]'));
@@ -177,6 +185,7 @@ function showLb() {
 
 function resetZoom(img) {
   isZoomed = false;
+  lbZoomLevel = 1;
   if (img) {
     img.style.transform = 'scale(1)';
     img.style.transition = '';
@@ -195,18 +204,42 @@ function lbNav(dir) {
   showLb();
 }
 
-// ── 手势：双击缩放 ──
-var lbLastTap = 0;
-document.getElementById('lightbox-img').addEventListener('click', function(e) {
-  var now = Date.now();
-  if (now - lbLastTap < 300) {
-    e.preventDefault();
-    isZoomed = !isZoomed;
-    this.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-    this.style.transform = isZoomed ? 'scale(2.5)' : 'scale(1)';
+function lbZoom(delta) {
+  var img = document.getElementById('lightbox-img');
+  if (delta === 0) {
+    isZoomed = false;
+    lbZoomLevel = 1;
+    img.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
+    img.style.transform = 'scale(1)';
+    return;
   }
-  lbLastTap = now;
+  lbZoomLevel = Math.min(4, Math.max(1, lbZoomLevel + delta));
+  isZoomed = lbZoomLevel > 1.05;
+  img.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
+  img.style.transform = 'scale(' + lbZoomLevel + ')';
+}
+
+// ── 手势：双击缩放 ──
+lbImg.addEventListener('dblclick', function(e) {
+  e.preventDefault();
+  isZoomed = !isZoomed;
+  lbZoomLevel = isZoomed ? 2.5 : 1;
+  this.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
+  this.style.transformOrigin = 'center center';
+  this.style.transform = 'scale(' + lbZoomLevel + ')';
 });
+
+// ── 鼠标滚轮缩放（桌面端） ──
+var lbZoomLevel = 1;
+lbImg.addEventListener('wheel', function(e) {
+  e.preventDefault();
+  var delta = e.deltaY > 0 ? -0.3 : 0.3;
+  lbZoomLevel = Math.min(4, Math.max(1, lbZoomLevel + delta));
+  isZoomed = lbZoomLevel > 1.05;
+  this.style.transition = 'transform 0.15s ease-out';
+  this.style.transformOrigin = 'center center';
+  this.style.transform = 'scale(' + lbZoomLevel + ')';
+}, { passive: false });
 
 // ── 手势：双指捏合缩放 ──
 var pinchStartDist = 0;
@@ -231,15 +264,16 @@ lbImg.addEventListener('touchmove', function(e) {
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
     );
-    var newScale = Math.min(4, Math.max(1, pinchStartScale * (dist / pinchStartDist)));
-    this.style.transform = 'scale(' + newScale + ')';
-    isZoomed = newScale > 1.1;
+    lbZoomLevel = Math.min(4, Math.max(1, pinchStartScale * (dist / pinchStartDist)));
+    this.style.transform = 'scale(' + lbZoomLevel + ')';
+    isZoomed = lbZoomLevel > 1.1;
   }
 }, { passive: false });
 
 lbImg.addEventListener('touchend', function() {
   this.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
   if (!isZoomed) {
+    lbZoomLevel = 1;
     this.style.transform = 'scale(1)';
   }
 });
@@ -293,7 +327,7 @@ lb.addEventListener('touchend', function(e) {
 
   // 弹回原位
   lbImg.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-  lbImg.style.transform = isZoomed ? 'scale(2.5)' : 'scale(1)';
+  lbImg.style.transform = isZoomed ? 'scale(' + lbZoomLevel + ')' : 'scale(1)';
   lb.style.transition = 'opacity 0.3s ease';
   lb.style.opacity = '1';
 });
