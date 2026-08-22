@@ -4,25 +4,26 @@
 
 {% block head %}
 <style>
-  /* 瀑布流网格布局 */
-  .masonry-grid {
-    column-count: 2;
-    column-gap: 14px;
+  /* 智能网格：手机 2 列，桌面 3 列，自动填补空隙 */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    grid-auto-flow: dense;
   }
   @media (min-width: 768px) {
-    .masonry-grid {
-      column-count: 3;
-      column-gap: 18px;
+    .photo-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
     }
   }
-  .masonry-item {
-    break-inside: avoid;
-    margin-bottom: 14px;
+
+  /* 横图智能跨越 2 列（占用更大画幅，清晰大气） */
+  .polaroid-card.is-wide {
+    grid-column: span 2;
   }
-  @media (min-width: 768px) {
-    .masonry-item {
-      margin-bottom: 18px;
-    }
+  .polaroid-card.is-wide .img-box {
+    aspect-ratio: 16 / 9;
   }
 
   /* 拍立得卡片相纸质感 */
@@ -50,7 +51,7 @@
 {% block body %}
 <div class="min-h-screen pb-36" x-data="{ openUpload: false }">
 
-  <!-- 顶部导航：限制在 max-w-3xl 容器内居中 -->
+  <!-- 顶部导航：居中约束在 max-w-3xl -->
   <div class="sticky top-0 z-30 bg-gradient-to-b from-[#fcfaf6] via-[#fcfaf6]/90 to-transparent backdrop-blur-sm">
     <nav class="max-w-3xl mx-auto px-4 pt-4 pb-3 flex items-center justify-between">
       <a href="{{ url_for('timeline.index') }}"
@@ -90,7 +91,7 @@
       {% endif %}
     </header>
 
-    <!-- 正文内容：纯净手账信纸感 -->
+    <!-- 正文内容 -->
     {% if event.content %}
     <div class="max-w-xl mx-auto my-3 px-6 py-4 rounded-2xl bg-white/70 card-shadow text-[15px] leading-relaxed text-ink/80 whitespace-pre-line font-hand">
       {{ event.content }}
@@ -120,15 +121,15 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     </form>
 
-    <!-- 照片瀑布流 -->
-    <div class="masonry-grid">
+    <!-- 照片智能网格（横图自动占 2 列，竖图占 1 列，从左往右自然排布） -->
+    <div class="photo-grid">
       {% for photo in photos %}
-      <div class="masonry-item polaroid-card relative group cursor-pointer select-none {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }}"
+      <div class="polaroid-card relative group cursor-pointer select-none {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }}"
            :class="$store.photoSelect.isSelected({{ photo.id }}) ? '!rotate-0 ring-2 ring-accent ring-offset-2 ring-offset-cream' : ''"
            @click="$store.photoSelect.mode ? $store.photoSelect.togglePhoto({{ photo.id }}) : openLightboxById({{ photo.id }})"
            x-data>
 
-        <!-- 选中勾选指示角标 -->
+        <!-- 选中角标 -->
         <div class="absolute top-3 left-3 z-20 transition-all duration-200"
              :class="$store.photoSelect.mode ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'">
           <div class="w-6 h-6 rounded-full flex items-center justify-center shadow-md transition"
@@ -139,18 +140,19 @@
           </div>
         </div>
 
-        <!-- 选中暗色温遮罩 -->
+        <!-- 选中遮罩 -->
         <div class="absolute inset-0 rounded-2xl bg-accent/10 transition-opacity pointer-events-none"
              :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'opacity-100' : 'opacity-0'"></div>
 
-        <!-- 图片展示 -->
-        <div class="overflow-hidden rounded-xl bg-warm">
+        <!-- 图片展示框（通过 onload 自动检测横竖图） -->
+        <div class="img-box overflow-hidden rounded-xl bg-warm aspect-[4/5] relative">
           <img src="{{ url_for('photo.serve_thumb', photo_id=photo.id) }}"
                data-full="{{ url_for('photo.serve', photo_id=photo.id) }}"
                data-photo-id="{{ photo.id }}"
                alt="{{ event.title }}"
                loading="lazy"
-               class="w-full object-cover block transition duration-300 group-hover:scale-[1.02]">
+               onload="if(this.naturalWidth / this.naturalHeight > 1.25){ this.closest('.polaroid-card').classList.add('is-wide'); }"
+               class="w-full h-full object-cover block transition duration-300 group-hover:scale-105">
         </div>
 
         <!-- 拍立得手写日期 -->
@@ -169,11 +171,11 @@
     </div>
   </div>
 
-  <!-- 底部居中悬浮胶囊岛（优雅浮动，不贴底） -->
+  <!-- 底部居中悬浮胶囊岛 -->
   <div class="fixed bottom-7 inset-x-0 z-40 flex justify-center pointer-events-none px-4" x-data>
     <div class="pointer-events-auto">
       
-      <!-- 正常模式：上传照片按钮 -->
+      <!-- 上传照片按钮 -->
       <button x-show="!$store.photoSelect.mode"
               @click="openUpload = true"
               type="button"
@@ -185,7 +187,7 @@
         <span>上传照片</span>
       </button>
 
-      <!-- 批量管理模式：删除选中的照片按钮 -->
+      <!-- 删除按钮 -->
       <button x-show="$store.photoSelect.mode"
               @click="executeBatchDelete()"
               :disabled="$store.photoSelect.count === 0"
@@ -207,20 +209,20 @@
 
 <!-- 全屏 Lightbox -->
 <div id="lightbox" class="hidden fixed inset-0 z-[60] bg-black/95 select-none touch-none">
-  <!-- 顶部工具条 -->
-  <div class="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent">
-    <div class="text-white/80 text-xs font-mono bg-white/10 rounded-full px-3 py-1 backdrop-blur-md" id="lb-counter"></div>
+  <div class="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/70 to-transparent">
+    <div class="text-white/80 text-xs font-mono bg-white/10 rounded-full px-3.5 py-1.5 backdrop-blur-md" id="lb-counter"></div>
     <div class="flex items-center gap-3">
       <a id="lb-download" href="#" download
-         class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center backdrop-blur active:scale-90 transition">
-        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         class="h-8 px-3.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-medium flex items-center gap-1.5 backdrop-blur transition active:scale-95 cursor-pointer">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
+        <span>下载原图</span>
       </a>
       <button onclick="closeLightbox()"
-              class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center backdrop-blur active:scale-90 transition">
+              class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center backdrop-blur active:scale-90 transition cursor-pointer">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -228,12 +230,10 @@
     </div>
   </div>
 
-  <!-- 主图显示容器 -->
   <div class="w-full h-full flex items-center justify-center p-3">
     <img id="lightbox-img" src="" alt="" class="max-h-full max-w-full object-contain lb-fade-in transition-transform duration-200 ease-out">
   </div>
 
-  <!-- 左右切换按键（PC端） -->
   <button onclick="lbNav(-1)" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur items-center justify-center transition">‹</button>
   <button onclick="lbNav(1)" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur items-center justify-center transition">›</button>
 </div>
@@ -386,7 +386,6 @@ if (lbModal) {
   });
 }
 
-// 键盘事件
 document.addEventListener('keydown', function(e) {
   if (lbModal && !lbModal.classList.contains('hidden')) {
     if (e.key === 'Escape') closeLightbox();
