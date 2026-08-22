@@ -58,15 +58,13 @@ def now() -> str:
 
 def seed_default_timeline():
     """确保存在一个默认时间轴（单空间模式）。"""
-    from werkzeug.security import generate_password_hash
-
     conn = get_db()
     try:
         row = conn.execute("SELECT id FROM timeline LIMIT 1").fetchone()
         if row is None:
             conn.execute(
                 "INSERT INTO timeline (name, password_hash, cover_image, created_at) VALUES (?, ?, ?, ?)",
-                ("我们的故事", generate_password_hash(config.ACCESS_PASSWORD), None, now()),
+                ("我们的故事", "", None, now()),
             )
             conn.commit()
     finally:

@@ -1,6 +1,6 @@
 """时间轴空间模型（单空间模式）。"""
+import os
 from database import get_db
-from werkzeug.security import check_password_hash
 
 
 def get_timeline():
@@ -13,8 +13,5 @@ def get_timeline():
 
 
 def verify_password(password: str) -> bool:
-    """校验访问密码。"""
-    timeline = get_timeline()
-    if timeline is None or not timeline["password_hash"]:
-        return False
-    return check_password_hash(timeline["password_hash"], password)
+    """校验访问密码，直接从环境变量读取。"""
+    return password == os.environ.get("TIMELINE_PASSWORD", "123456")
