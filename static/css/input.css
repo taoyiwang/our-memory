@@ -8,18 +8,18 @@
    大留白 · 大圆角 · 柔和阴影 · 微动画
    拍立得 / 手账风 · 陶土橘强调色 */
 @theme {
-  --color-cream: #fdfbf7;
-  --color-cream-deep: #f8f5ee;
+  --color-cream: #fcfaf6;
+  --color-cream-deep: #f4ede2;
   --color-warm: #f6efe6;
-  --color-ink: #2b2b2b;
-  --color-ink-soft: #57534e;   /* stone-600 */
-  --color-ink-mute: #a8a29e;   /* stone-400 */
+  --color-ink: #2b231f;
+  --color-ink-soft: #5c534e;
+  --color-ink-mute: #a89f91;
   --color-accent: #d97d54;     /* 陶土橘 */
   --color-accent-soft: #c86d51;/* 焦糖棕（hover/深） */
-  --color-paper: #fcfaf6;      /* 拍立得纸白 */
+  --color-paper: #ffffff;      /* 拍立得纸白 */
 
-  --font-serif: "Songti SC", "Noto Serif SC", "STSong", serif;
-  --font-hand: "Kaiti SC", "STKaiti", "KaiTi", serif;
+  --font-serif: "Songti SC", "Source Han Serif SC", "Noto Serif SC", "STSong", "SimSun", serif;
+  --font-hand: "Kaiti SC", "STKaiti", "KaiTi", "楷体", cursive, serif;
 }
 
 html {
@@ -36,34 +36,45 @@ body {
 /* 细腻弥散阴影 —— 精致漂浮感 */
 .card-shadow {
   box-shadow:
-    0 12px 32px -4px rgba(43, 30, 22, 0.06),
-    0 4px 12px -2px rgba(43, 30, 22, 0.03);
+    0 12px 32px -4px rgba(43, 28, 18, 0.06),
+    0 4px 12px -2px rgba(43, 28, 18, 0.03);
 }
 .card-shadow-lg {
   box-shadow:
-    0 24px 48px -12px rgba(43, 30, 22, 0.12),
-    0 8px 20px -6px rgba(43, 30, 22, 0.05);
+    0 24px 48px -12px rgba(43, 28, 18, 0.12),
+    0 8px 20px -6px rgba(43, 28, 18, 0.05);
 }
 
 /* 拍立得卡片 */
 .polaroid {
   background: var(--color-paper);
-  border: 1px solid rgba(43, 30, 22, 0.04);
+  border: 1px solid rgba(43, 28, 18, 0.04);
   box-shadow:
-    0 12px 32px -4px rgba(43, 30, 22, 0.08),
-    0 4px 12px -2px rgba(43, 30, 22, 0.04);
+    0 12px 32px -4px rgba(43, 28, 18, 0.08),
+    0 4px 12px -2px rgba(43, 28, 18, 0.04);
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .polaroid:hover {
   transform: translateY(-6px) scale(1.02) rotate(0deg) !important;
   box-shadow:
-    0 24px 48px -12px rgba(43, 30, 22, 0.16),
-    0 8px 20px -6px rgba(43, 30, 22, 0.07);
+    0 24px 48px -12px rgba(43, 28, 18, 0.16),
+    0 8px 20px -6px rgba(43, 28, 18, 0.07);
 }
 /* 微旋转：随机感（奇数左旋，偶数右旋） */
 .tilt-left  { transform: rotate(-0.8deg); }
 .tilt-right { transform: rotate(0.8deg); }
+
+/* 防止旋转卡片横向溢出 */
+.timeline-line {
+  overflow-x: clip;
+}
+
+/* 手机端减小旋转角度，避免卡片切边 */
+@media (max-width: 767px) {
+  .tilt-left  { transform: rotate(-0.4deg); }
+  .tilt-right { transform: rotate(0.4deg); }
+}
 
 /* Alpine 初始化前隐藏 x-show 元素 */
 [x-cloak] { display: none !important; }
@@ -82,10 +93,33 @@ body {
   left: 50%;
   width: 1px;
   transform: translateX(-50%);
-  background: linear-gradient(to bottom, transparent, rgba(168, 162, 158, 0.35) 8%, rgba(168, 162, 158, 0.35) 92%, transparent);
+  background: linear-gradient(to bottom, transparent, rgba(168, 159, 145, 0.35) 8%, rgba(168, 159, 145, 0.35) 92%, transparent);
 }
 @media (max-width: 767px) {
   .timeline-line::before { left: 7px; transform: none; }
+}
+
+/* 中轴线上的小太阳：吸附到当前最近的节点圆点，节点间平滑滑动 */
+.timeline-sun {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 35%, #ffe3b3, var(--color-accent) 62%, #c86d51);
+  box-shadow:
+    0 0 0 5px rgba(217, 125, 84, 0.12),
+    0 0 18px 4px rgba(217, 125, 84, 0.45),
+    0 0 34px 8px rgba(217, 125, 84, 0.25);
+  pointer-events: none;
+  z-index: 30;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline-sun { transition: none; }
 }
 
 /* 时间轴节点圆点：陶土橘 + 呼吸光晕 */

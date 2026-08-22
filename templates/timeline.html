@@ -13,10 +13,17 @@
       <p class="text-sm font-hand tracking-widest">一起走过的日子</p>
       <span class="w-10 h-px bg-ink/15"></span>
     </div>
+    {% if count %}
+    <p class="mt-5 font-hand text-base text-accent-soft tracking-wider">
+      已一起走过 <span id="day-counter" class="text-lg font-medium">0</span> 天 · {{ count }} 条回忆
+    </p>
+    {% endif %}
   </header>
 
   <!-- 时间轴容器 -->
   <div class="relative timeline-line">
+    <!-- 随滚动沿轴线移动的小太阳 -->
+    <div class="timeline-sun" id="timeline-sun" aria-hidden="true"></div>
     <div class="space-y-16">
       {% set ns = namespace(last_month='') %}
       {% for event in events %}
@@ -44,14 +51,34 @@
             <a href="{{ url_for('event.detail', event_id=event.id) }}"
                class="polaroid {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }} block rounded-2xl p-4 sm:p-5 active:scale-[0.98]">
 
-              <!-- 封面图（内嵌圆角） -->
+              <!-- 封面图（内嵌圆角；奇数 16/10、偶数近方，打破等大节奏） -->
               <div class="img-frame mb-3">
-                <div class="relative aspect-[16/10] overflow-hidden bg-warm">
-                  {% if event.cover_photo %}
-                  <img src="{{ url_for('photo.serve_thumb', photo_id=event.cover_photo) }}"
+                <div class="relative overflow-hidden bg-warm {{ 'aspect-[16/10]' if loop.index0 % 2 == 0 else 'aspect-[4/5]' }}">
+                  {% set covers = event.cover_photos or [] %}
+                  {% if covers %}
+                  <!-- 主图：第一张 -->
+                  <img src="{{ url_for('photo.serve_thumb', photo_id=covers[0]) }}"
                        alt="{{ event.title }}"
                        loading="lazy"
-                       class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
+                       class="w-full h-full object-cover rounded-xl transition-transform duration-700 ease-out group-hover:scale-105">
+                  {% if covers|length >= 2 %}
+                  <!-- 第二张：微错位叠在主图右下，像手账贴纸 -->
+                  <div class="absolute bottom-0 right-0 translate-x-1.5 translate-y-1.5
+                              w-[42%] aspect-[4/5] rounded-xl overflow-hidden border-2 border-paper
+                              shadow-[0_4px_12px_rgba(43,30,22,0.18)] rotate-3">
+                    <img src="{{ url_for('photo.serve_thumb', photo_id=covers[1]) }}"
+                         alt="" loading="lazy" class="w-full h-full object-cover">
+                  </div>
+                  {% endif %}
+                  {% if covers|length >= 3 %}
+                  <!-- 第三张：再叠一层，更偏、更小 -->
+                  <div class="absolute bottom-0.5 right-0.5 translate-x-3.5 translate-y-3.5
+                              w-[34%] aspect-[4/5] rounded-xl overflow-hidden border-2 border-paper
+                              shadow-[0_6px_16px_rgba(43,30,22,0.22)] -rotate-4">
+                    <img src="{{ url_for('photo.serve_thumb', photo_id=covers[2]) }}"
+                         alt="" loading="lazy" class="w-full h-full object-cover">
+                  </div>
+                  {% endif %}
                   {% else %}
                   <div class="w-full h-full flex items-center justify-center">
                     <span class="text-4xl opacity-30">📷</span>
@@ -59,10 +86,12 @@
                   {% endif %}
 
                   <!-- 照片张数玻璃徽章 -->
-                  <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-full
+                  {% if event.photo_count %}
+                  <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-ink/40 backdrop-blur-md rounded-full
                               text-[11px] text-white/90 font-medium tracking-wide flex items-center gap-1">
                     <span>{{ event.photo_count }}P</span>
                   </div>
+                  {% endif %}
                 </div>
               </div>
 
@@ -100,7 +129,7 @@
   <!-- 新增 FAB -->
   <button @click="openAdd = true"
           class="fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-ink text-white
-                 shadow-[0_12px_30px_rgba(43,43,43,0.3)] flex items-center justify-center
+                 shadow-[0_12px_30px_rgba(68,45,30,0.3)] flex items-center justify-center
                  active:scale-90 transition-transform duration-150">
     <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
       <path d="M12 5v14M5 12h14"></path>
@@ -119,5 +148,25 @@
   <!-- 新增回忆 Bottom Sheet -->
   {% include "partials/add_sheet.html" %}
 </div>
+
+<!-- 天数跳动动画 -->
+<script>
+(function() {
+  var el = document.getElementById('day-counter');
+  if (!el) return;
+  var target = parseInt('{{ days }}', 10);
+  if (!target || target <= 0) return;
+  var duration = 1500;
+  var start = performance.now();
+  function tick(now) {
+    var p = Math.min((now - start) / duration, 1);
+    var eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.floor(eased * target);
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
 
 {% endblock %}

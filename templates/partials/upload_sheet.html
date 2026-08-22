@@ -37,6 +37,7 @@
 
       <!-- 选择区 -->
       <label for="upload-photos"
+             @click="setTimeout(() => $el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100)"
              class="flex flex-col items-center justify-center h-28 rounded-2xl border-2 border-dashed border-ink/15
                     bg-cream-deep/50 cursor-pointer transition hover:border-accent/60">
         <span class="text-3xl">📷</span>

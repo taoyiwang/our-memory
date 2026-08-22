@@ -70,6 +70,7 @@
       <div>
         <label class="text-sm text-ink-soft mb-1.5 block">照片</label>
         <label for="add-photos"
+               @click="setTimeout(() => $el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100)"
                class="flex flex-col items-center justify-center h-24 rounded-xl border-2 border-dashed border-ink/15
                       bg-cream-deep/50 cursor-pointer transition hover:border-accent/60">
           <span class="text-2xl">📷</span>
