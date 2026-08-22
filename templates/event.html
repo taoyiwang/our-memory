@@ -4,434 +4,395 @@
 
 {% block head %}
 <style>
-  /* 瀑布流网格 */
-  .masonry { columns: 2; column-gap: 8px; }
-  @media (min-width: 768px) { .masonry { columns: 3; column-gap: 12px; } }
+  /* 瀑布流网格布局 */
+  .masonry-grid {
+    column-count: 2;
+    column-gap: 14px;
+  }
+  @media (min-width: 768px) {
+    .masonry-grid {
+      column-count: 3;
+      column-gap: 18px;
+    }
+  }
   .masonry-item {
     break-inside: avoid;
-    margin-bottom: 8px;
-    animation: photoIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--i) * 0.06s);
+    margin-bottom: 14px;
   }
-  @media (min-width: 768px) { .masonry-item { margin-bottom: 12px; } }
-  @keyframes photoIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+  @media (min-width: 768px) {
+    .masonry-item {
+      margin-bottom: 18px;
+    }
   }
-  /* 全屏预览淡入 */
-  .lightbox { transition: opacity 0.3s ease; }
-  .lightbox img { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
-  .lb-enter { animation: lbIn 0.25s ease-out both; }
-  @keyframes lbIn {
+
+  /* 拍立得卡片相纸质感 */
+  .polaroid-card {
+    background: #ffffff;
+    border-radius: 1.1rem;
+    padding: 8px 8px 12px 8px;
+    box-shadow: 0 4px 18px -2px rgba(43, 28, 18, 0.08), 0 2px 6px -1px rgba(43, 28, 18, 0.04);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  }
+  .polaroid-card:hover {
+    transform: translateY(-4px) scale(1.01) rotate(0deg) !important;
+    box-shadow: 0 16px 32px -4px rgba(43, 28, 18, 0.14);
+  }
+
+  /* Lightbox 动画 */
+  .lb-fade-in { animation: lbFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes lbFade {
     from { opacity: 0; transform: scale(0.96); }
-    to   { opacity: 1; transform: scale(1); }
+    to { opacity: 1; transform: scale(1); }
   }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="min-h-screen" x-data="{ openUpload: false }" x-init="$watch('openUpload', val => { if(!val) document.querySelector('body').classList.remove('overflow-hidden') })">
+<div class="min-h-screen pb-36" x-data="{ openUpload: false }">
 
-  <!-- 顶部返回 -->
-  <nav class="sticky top-0 z-30 flex items-center justify-between px-4 pt-4 pb-2
-              bg-gradient-to-b from-cream to-transparent">
-    <a href="{{ url_for('timeline.index') }}"
-       class="w-10 h-10 rounded-full bg-white/80 backdrop-blur card-shadow flex items-center justify-center
-              active:scale-90 transition-transform">
-      <svg viewBox="0 0 24 24" class="w-5 h-5 text-ink" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 18l-6-6 6-6"></path>
-      </svg>
-    </a>
-    <span class="font-hand text-sm text-ink-mute tracking-widest">回忆详情</span>
-    <div class="w-10 h-10"></div>
-  </nav>
-
-  <!-- 事件内容 -->
-  <div class="max-w-3xl mx-auto px-5 pt-2 pb-32">
-    <!-- 标题 / 日期 / 地点（手账排版） -->
-    <header class="text-center pt-6">
-      <h1 class="font-serif text-3xl font-medium text-ink leading-snug">{{ event.title }}</h1>
-      <p class="mt-4 font-hand text-base text-ink-mute tracking-wide">{{ event.event_date|date_cn }}</p>
-      {% if event.location %}
-      <p class="mt-1.5 text-sm text-ink-mute flex items-center justify-center gap-1.5">
-        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <circle cx="12" cy="11" r="2.5"/>
+  <!-- 顶部导航：限制在 max-w-3xl 容器内居中 -->
+  <div class="sticky top-0 z-30 bg-gradient-to-b from-[#fcfaf6] via-[#fcfaf6]/90 to-transparent backdrop-blur-sm">
+    <nav class="max-w-3xl mx-auto px-4 pt-4 pb-3 flex items-center justify-between">
+      <a href="{{ url_for('timeline.index') }}"
+         class="w-10 h-10 rounded-full bg-white card-shadow flex items-center justify-center text-ink active:scale-90 transition">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"></path>
         </svg>
-        <span class="inline-flex items-center px-3 py-1 rounded-full bg-accent/10 text-accent-soft text-xs font-medium">
+      </a>
+      <span class="font-serif text-sm text-ink-mute tracking-widest">回忆详情</span>
+      <a href="{{ url_for('event.edit', event_id=event.id) }}"
+         class="w-10 h-10 rounded-full bg-white card-shadow flex items-center justify-center text-ink active:scale-90 transition">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </a>
+    </nav>
+  </div>
+
+  <!-- 回忆内容主体 -->
+  <div class="max-w-3xl mx-auto px-4 pt-2">
+    
+    <!-- 标题 / 日期 / 地点 -->
+    <header class="text-center pt-2 pb-5">
+      <h1 class="font-serif text-3xl md:text-4xl text-ink font-medium leading-snug">{{ event.title }}</h1>
+      <p class="mt-2.5 font-hand text-base text-ink-mute tracking-wider">{{ event.event_date|date_cn }}</p>
+      {% if event.location %}
+      <div class="mt-2 flex items-center justify-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cream-deep text-accent-soft text-xs font-hand">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <circle cx="12" cy="11" r="2.5"/>
+          </svg>
           {{ event.location }}
         </span>
-      </p>
+      </div>
       {% endif %}
     </header>
 
-    <!-- 正文 -->
+    <!-- 正文内容：纯净手账信纸感 -->
     {% if event.content %}
-    <div class="mt-8 px-2 text-[15px] leading-relaxed text-ink/70 whitespace-pre-line font-hand">
+    <div class="max-w-xl mx-auto my-3 px-6 py-4 rounded-2xl bg-white/70 card-shadow text-[15px] leading-relaxed text-ink/80 whitespace-pre-line font-hand">
       {{ event.content }}
     </div>
     {% endif %}
 
-    <!-- 照片操作栏 -->
-    <div class="flex items-center justify-between mt-4 px-2" x-data>
-      <div class="flex items-center gap-3">
-        <!-- 选择模式开关（胶囊样式） -->
-        <button @click="$store.photoSelect.toggleMode()"
-                class="flex items-center gap-2 px-4 py-1.5 rounded-full border-2 transition-all duration-200 text-sm font-medium"
-                :class="$store.photoSelect.mode ? 'border-accent bg-accent/10 text-accent' : 'border-ink/10 bg-white/60 text-ink-mute hover:border-ink/20'">
-          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <polyline points="9 12 12 15 21 6"/>
-          </svg>
-          <span x-text="$store.photoSelect.mode ? '退出选择' : '选择照片'"></span>
-        </button>
-      </div>
-      <!-- 已选数量 -->
-      <span x-show="$store.photoSelect.mode && $store.photoSelect.count > 0" class="text-sm text-ink-mute">
-        已选 <span class="font-medium text-accent" x-text="$store.photoSelect.count"></span> 张
+    <!-- 照片操作工具栏 -->
+    <div class="flex items-center justify-between mt-8 mb-4 px-1" x-data>
+      <button @click="$store.photoSelect.toggleMode()"
+              type="button"
+              class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition duration-200 card-shadow cursor-pointer"
+              :class="$store.photoSelect.mode ? 'bg-accent text-white font-medium' : 'bg-white text-ink-soft hover:text-ink'">
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <polyline points="9 12 12 15 21 6"/>
+        </svg>
+        <span x-text="$store.photoSelect.mode ? '退出管理' : '批量管理'"></span>
+      </button>
+
+      <span x-show="$store.photoSelect.mode" class="text-xs font-hand text-ink-mute">
+        已选择 <span class="font-bold text-accent" x-text="$store.photoSelect.count"></span> 张照片
       </span>
-      <span x-show="$store.photoSelect.mode && $store.photoSelect.count === 0" class="text-sm text-ink-mute/50">点击照片选择</span>
     </div>
+
+    <!-- 批量删除隐藏 Form -->
     <form id="batch-delete-form" method="post" action="{{ url_for('photo.batch_delete', event_id=event.id) }}" class="hidden">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     </form>
 
-    <!-- 照片瀑布流（拍立得风格：图内嵌圆角 + 白边） -->
-    <div class="masonry mt-4">
+    <!-- 照片瀑布流 -->
+    <div class="masonry-grid">
       {% for photo in photos %}
-      <div class="masonry-item polaroid rounded-2xl p-2 {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }} relative group transition-all duration-200"
-           style="--i: {{ loop.index0 }}"
-           :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'ring-2 ring-emerald-500/70 ring-offset-2 ring-offset-white' : ''"
+      <div class="masonry-item polaroid-card relative group cursor-pointer select-none {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }}"
+           :class="$store.photoSelect.isSelected({{ photo.id }}) ? '!rotate-0 ring-2 ring-accent ring-offset-2 ring-offset-cream' : ''"
+           @click="$store.photoSelect.mode ? $store.photoSelect.togglePhoto({{ photo.id }}) : openLightboxById({{ photo.id }})"
            x-data>
-        <!-- 选择模式复选框（选择模式下始终可见，非选择模式隐藏） -->
-        <div class="absolute top-2.5 left-2.5 z-10 transition-opacity duration-200"
-             :class="$store.photoSelect.mode ? 'opacity-100' : 'opacity-0 pointer-events-none'">
-          <input type="checkbox" class="photo-checkbox w-6 h-6 rounded-lg border-2 border-white/80 bg-ink/30 text-emerald-500 focus:ring-2 focus:ring-emerald-400/50 cursor-pointer transition-all duration-150"
-                 :checked="$store.photoSelect.isSelected({{ photo.id }})"
-                 @change="$store.photoSelect.togglePhoto({{ photo.id }})">
-        </div>
-        <!-- 选中遮罩 + ✓ 标记 -->
-        <div class="absolute inset-0 rounded-2xl transition-opacity duration-200 pointer-events-none"
-             :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'opacity-100' : 'opacity-0'"
-             style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));">
-          <div class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+
+        <!-- 选中勾选指示角标 -->
+        <div class="absolute top-3 left-3 z-20 transition-all duration-200"
+             :class="$store.photoSelect.mode ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center shadow-md transition"
+               :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'bg-accent text-white' : 'bg-black/40 text-transparent backdrop-blur'">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
           </div>
         </div>
-        <!-- 单张删除按钮（选择模式下隐藏） -->
-        <button onclick="if(confirm('确定删除这张照片吗？')){document.getElementById('delete-form-{{ photo.id }}').submit()}"
-                class="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-ink/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500"
-                :class="$store.photoSelect.mode ? 'opacity-0 pointer-events-none' : ''">
-          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-        <form id="delete-form-{{ photo.id }}" method="post" action="{{ url_for('photo.delete', photo_id=photo.id) }}" class="hidden">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        </form>
-        <!-- 点击照片切换选中（选择模式下）或打开 lightbox（非选择模式） -->
-        <img src="{{ url_for('photo.serve_thumb', photo_id=photo.id) }}"
-             data-full="{{ url_for('photo.serve', photo_id=photo.id) }}"
-             data-photo-id="{{ photo.id }}"
-             alt="{{ event.title }}"
-             loading="lazy"
-             @click="$store.photoSelect.mode ? $store.photoSelect.togglePhoto({{ photo.id }}) : openLightbox(this)"
-             class="w-full object-cover cursor-pointer hover:opacity-95 transition rounded-xl"
-             style="min-height: 120px;">
+
+        <!-- 选中暗色温遮罩 -->
+        <div class="absolute inset-0 rounded-2xl bg-accent/10 transition-opacity pointer-events-none"
+             :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'opacity-100' : 'opacity-0'"></div>
+
+        <!-- 图片展示 -->
+        <div class="overflow-hidden rounded-xl bg-warm">
+          <img src="{{ url_for('photo.serve_thumb', photo_id=photo.id) }}"
+               data-full="{{ url_for('photo.serve', photo_id=photo.id) }}"
+               data-photo-id="{{ photo.id }}"
+               alt="{{ event.title }}"
+               loading="lazy"
+               class="w-full object-cover block transition duration-300 group-hover:scale-[1.02]">
+        </div>
+
+        <!-- 拍立得手写日期 -->
         {% if event.event_date %}
-        <p class="text-right mt-1 pr-0.5 font-hand text-[10px] text-ink-mute/50 tracking-wide">{{ event.event_date[0:4] }}.{{ event.event_date[5:7] }}.{{ event.event_date[8:10] }}</p>
+        <p class="text-right mt-1.5 pr-1 font-hand text-[10px] text-ink-mute/60 tracking-wider">
+          {{ event.event_date[0:4] }}.{{ event.event_date[5:7] }}.{{ event.event_date[8:10] }}
+        </p>
         {% endif %}
       </div>
       {% else %}
-      <div class="col-span-full py-16 text-center">
-        <div class="text-4xl mb-3 opacity-40">🖼️</div>
-        <p class="font-hand text-ink-mute text-base">还没有照片，点击下方上传</p>
+      <div class="col-span-full py-20 text-center">
+        <div class="text-4xl mb-3 opacity-30">📷</div>
+        <p class="font-hand text-ink-mute text-sm">还没有照片，点击下方上传第一张回忆吧</p>
       </div>
       {% endfor %}
     </div>
   </div>
 
-  <!-- 底部操作栏 -->
-  <div class="fixed bottom-0 inset-x-0 z-40 pb-safe">
-    <div class="bg-white/90 backdrop-blur-xl border-t border-ink/5 transition-all duration-300"
-         :class="$store.photoSelect.mode && $store.photoSelect.count > 0 ? 'border-emerald-500/30 shadow-[0_-4px_30px_rgba(16,185,129,0.1)]' : ''">
-      <div class="max-w-3xl mx-auto px-5 py-3 flex items-center gap-3">
-        <!-- 选择模式：批量删除按钮 -->
-        <template x-if="$store.photoSelect.mode && $store.photoSelect.count > 0">
-          <button @click="if(confirm('确定删除选中的 '+$store.photoSelect.count+' 张照片吗？')){document.getElementById('batch-delete-form').querySelectorAll('input[name=photo_ids]').forEach(el=>el.remove());$store.photoSelect.selected.forEach(id=>{let inp=document.createElement('input');inp.type='hidden';inp.name='photo_ids';inp.value=id;document.getElementById('batch-delete-form').appendChild(inp)});document.getElementById('batch-delete-form').submit()}"
-                  class="flex-1 h-12 rounded-2xl bg-rose-500 text-white font-medium shadow-[0_10px_30px_rgba(244,63,94,0.3)]
-                         active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
-            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>
-            </svg>
-            删除所选 <span class="font-semibold" x-text="$store.photoSelect.count"></span> 张
-          </button>
-        </template>
-        <!-- 非选择模式：上传按钮 -->
-        <template x-if="!$store.photoSelect.mode || $store.photoSelect.count === 0">
-          <button @click="openUpload = true"
-                  class="flex-1 h-12 rounded-2xl bg-accent text-white font-medium shadow-[0_10px_30px_rgba(217,125,84,0.3)]
-                         active:scale-[0.98] transition-transform">
-            上传照片
-          </button>
-        </template>
-        <!-- 编辑按钮 -->
-        <a href="{{ url_for('event.edit', event_id=event.id) }}"
-           class="w-12 h-12 rounded-2xl bg-white border border-ink/10 flex items-center justify-center
-                  text-ink-mute active:scale-90 transition-transform shrink-0">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </a>
-        <!-- 删除事件按钮 -->
-        <button onclick="if(confirm('删除这个回忆吗？'))document.getElementById('delete-event-form').submit()"
-                class="w-12 h-12 rounded-2xl bg-white border border-ink/10 flex items-center justify-center
-                       text-ink-mute active:scale-90 transition-transform shrink-0"
-                :class="$store.photoSelect.mode && $store.photoSelect.count > 0 ? 'opacity-30 pointer-events-none' : ''">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path>
-          </svg>
-        </button>
-      </div>
+  <!-- 底部居中悬浮胶囊岛（优雅浮动，不贴底） -->
+  <div class="fixed bottom-7 inset-x-0 z-40 flex justify-center pointer-events-none px-4" x-data>
+    <div class="pointer-events-auto">
+      
+      <!-- 正常模式：上传照片按钮 -->
+      <button x-show="!$store.photoSelect.mode"
+              @click="openUpload = true"
+              type="button"
+              class="h-12 px-7 rounded-full bg-accent hover:bg-accent-soft text-white font-medium text-sm flex items-center gap-2 shadow-[0_10px_28px_rgba(217,125,84,0.4)] active:scale-95 transition-all cursor-pointer">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>上传照片</span>
+      </button>
+
+      <!-- 批量管理模式：删除选中的照片按钮 -->
+      <button x-show="$store.photoSelect.mode"
+              @click="executeBatchDelete()"
+              :disabled="$store.photoSelect.count === 0"
+              type="button"
+              class="h-12 px-7 rounded-full text-white font-medium text-sm flex items-center gap-2 transition-all"
+              :class="$store.photoSelect.count > 0 ? 'bg-rose-500 hover:bg-rose-600 shadow-[0_10px_28px_rgba(244,63,94,0.4)] active:scale-95 cursor-pointer' : 'bg-stone-300 text-stone-500 shadow-none cursor-not-allowed'">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+        <span>删除选中的 <span class="font-bold text-white" x-text="$store.photoSelect.count"></span> 张</span>
+      </button>
+
     </div>
   </div>
-  <form id="delete-event-form" method="post" action="{{ url_for('event.delete', event_id=event.id) }}" class="hidden">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-  </form>
 
-  <!-- 上传照片 Bottom Sheet -->
+  <!-- 上传 Bottom Sheet -->
   {% include "partials/upload_sheet.html" %}
 </div>
 
-<!-- 全屏 Lightbox（带过渡动画） -->
-<div id="lightbox" class="hidden fixed inset-0 z-[60] bg-ink/95 lightbox">
-  <button onclick="closeLightbox()"
-          class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 text-white
-                 flex items-center justify-center backdrop-blur active:scale-90 transition-transform">
-    <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <path d="M18 6L6 18M6 6l12 12"></path>
-    </svg>
-  </button>
-  <!-- 下载按钮 -->
-  <a id="lb-download" href="#" download
-     class="absolute top-4 right-16 z-10 w-10 h-10 rounded-full bg-white/10 text-white
-            flex items-center justify-center backdrop-blur active:scale-90 transition-transform">
-    <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="7 10 12 15 17 10"/>
-      <line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-  </a>
-  <div class="h-full flex items-center justify-center px-4" style="overflow: hidden;">
-    <img id="lightbox-img" src="" alt="" class="max-h-full max-w-full object-contain lb-enter" style="touch-action: manipulation;">
+<!-- 全屏 Lightbox -->
+<div id="lightbox" class="hidden fixed inset-0 z-[60] bg-black/95 select-none touch-none">
+  <!-- 顶部工具条 -->
+  <div class="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent">
+    <div class="text-white/80 text-xs font-mono bg-white/10 rounded-full px-3 py-1 backdrop-blur-md" id="lb-counter"></div>
+    <div class="flex items-center gap-3">
+      <a id="lb-download" href="#" download
+         class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center backdrop-blur active:scale-90 transition">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </a>
+      <button onclick="closeLightbox()"
+              class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center backdrop-blur active:scale-90 transition">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
   </div>
-  <!-- 左右切换 -->
-  <button id="lb-prev" onclick="lbNav(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white backdrop-blur flex items-center justify-center">‹</button>
-  <button id="lb-next" onclick="lbNav(1)" class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 text-white backdrop-blur flex items-center justify-center">›</button>
 
-  <!-- 照片索引 -->
-  <div class="absolute top-4 left-4 z-10 text-white/70 text-sm bg-ink/30 rounded-full px-3 py-1 backdrop-blur" id="lb-counter"></div>
-
-  <!-- 缩放按钮 -->
-  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-    <button onclick="lbZoom(-0.5)" class="w-9 h-9 rounded-full bg-white/15 text-white backdrop-blur flex items-center justify-center text-lg active:scale-90 transition-transform">−</button>
-    <button onclick="lbZoom(0.5)" class="w-9 h-9 rounded-full bg-white/15 text-white backdrop-blur flex items-center justify-center text-lg active:scale-90 transition-transform">+</button>
-    <button onclick="lbZoom(0)" class="w-9 h-9 rounded-full bg-white/15 text-white backdrop-blur flex items-center justify-center text-sm active:scale-90 transition-transform">1:1</button>
+  <!-- 主图显示容器 -->
+  <div class="w-full h-full flex items-center justify-center p-3">
+    <img id="lightbox-img" src="" alt="" class="max-h-full max-w-full object-contain lb-fade-in transition-transform duration-200 ease-out">
   </div>
+
+  <!-- 左右切换按键（PC端） -->
+  <button onclick="lbNav(-1)" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur items-center justify-center transition">‹</button>
+  <button onclick="lbNav(1)" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur items-center justify-center transition">›</button>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-// 全屏 Lightbox（双击缩放 · 双指捏合 · 下滑关闭 · 水平滑动 · 键盘）
-let lightboxPhotos = [];
-let lightboxIndex = 0;
-let lbTouchStartX = 0;
-let lbTouchStartY = 0;
-let isZoomed = false;
-let lbZoomLevel = 1;
+// 初始化 Alpine Store
+document.addEventListener('alpine:init', function() {
+  Alpine.store('photoSelect', {
+    selected: [],
+    mode: false,
+    toggleMode() {
+      this.mode = !this.mode;
+      if (!this.mode) this.selected = [];
+    },
+    togglePhoto(id) {
+      var idx = this.selected.indexOf(id);
+      if (idx > -1) {
+        this.selected.splice(idx, 1);
+      } else {
+        this.selected.push(id);
+      }
+    },
+    isSelected(id) {
+      return this.selected.indexOf(id) > -1;
+    },
+    get count() {
+      return this.selected.length;
+    }
+  });
+});
 
-let lightboxPhotoIds = [];
+// 执行批量删除
+function executeBatchDelete() {
+  var store = Alpine.store('photoSelect');
+  if (store.count === 0) return;
+  if (!confirm('确定要永久删除选中的 ' + store.count + ' 张照片吗？')) return;
 
-function openLightbox(img) {
-  const items = Array.from(document.querySelectorAll('img[data-full]'));
-  lightboxPhotos = items.map(i => i.dataset.full);
-  lightboxPhotoIds = items.map(i => i.dataset.photoId || '');
-  lightboxIndex = items.indexOf(img);
-  if (lightboxIndex === -1) lightboxIndex = 0;
+  var form = document.getElementById('batch-delete-form');
+  form.querySelectorAll('input[name="photo_ids"]').forEach(function(el) { el.remove(); });
+  
+  store.selected.forEach(function(id) {
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'photo_ids';
+    input.value = id;
+    form.appendChild(input);
+  });
+  form.submit();
+}
+
+// Lightbox 查看大图
+var lbPhotos = [];
+var lbIndex = 0;
+var lbPhotoIds = [];
+var lbImg = document.getElementById('lightbox-img');
+var lbModal = document.getElementById('lightbox');
+
+function syncPhotosData() {
+  var items = Array.from(document.querySelectorAll('img[data-full]'));
+  lbPhotos = items.map(function(el) { return el.dataset.full; });
+  lbPhotoIds = items.map(function(el) { return el.dataset.photoId || ''; });
+}
+
+function openLightboxById(photoId) {
+  syncPhotosData();
+  var idx = lbPhotoIds.indexOf(String(photoId));
+  lbIndex = idx > -1 ? idx : 0;
   showLb();
 }
 
 function showLb() {
-  document.getElementById('lightbox').classList.remove('hidden');
-  var img = document.getElementById('lightbox-img');
-  img.classList.remove('lb-enter');
-  void img.offsetWidth;
-  img.classList.add('lb-enter');
-  img.src = lightboxPhotos[lightboxIndex];
-  resetZoom(img);
-  document.getElementById('lb-counter').textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
-  // 更新下载链接
+  if (!lbPhotos.length) return;
+  lbModal.classList.remove('hidden');
+  resetZoom();
+  
+  lbImg.classList.remove('lb-fade-in');
+  void lbImg.offsetWidth;
+  lbImg.classList.add('lb-fade-in');
+  
+  lbImg.src = lbPhotos[lbIndex];
+  document.getElementById('lb-counter').textContent = (lbIndex + 1) + ' / ' + lbPhotos.length;
+  
   var dl = document.getElementById('lb-download');
-  if (dl && lightboxPhotoIds[lightboxIndex]) {
-    dl.href = '/photo/' + lightboxPhotoIds[lightboxIndex] + '/download';
+  if (dl && lbPhotoIds[lbIndex]) {
+    dl.href = '/photo/' + lbPhotoIds[lbIndex] + '/download';
   }
 }
 
-function resetZoom(img) {
-  isZoomed = false;
-  lbZoomLevel = 1;
-  if (img) {
-    img.style.transform = 'scale(1)';
-    img.style.transition = '';
+function resetZoom() {
+  if (lbImg) {
+    lbImg.style.transform = 'scale(1) translate3d(0, 0, 0)';
+  }
+  if (lbModal) {
+    lbModal.style.opacity = '1';
   }
 }
 
 function closeLightbox() {
-  var img = document.getElementById('lightbox-img');
-  resetZoom(img);
-  document.getElementById('lightbox').classList.add('hidden');
-  img.src = '';
+  resetZoom();
+  lbModal.classList.add('hidden');
+  if (lbImg) lbImg.src = '';
 }
 
 function lbNav(dir) {
-  lightboxIndex = (lightboxIndex + dir + lightboxPhotos.length) % lightboxPhotos.length;
+  if (!lbPhotos.length) return;
+  lbIndex = (lbIndex + dir + lbPhotos.length) % lbPhotos.length;
   showLb();
 }
 
-function lbZoom(delta) {
-  var img = document.getElementById('lightbox-img');
-  if (delta === 0) {
-    isZoomed = false;
-    lbZoomLevel = 1;
-    img.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-    img.style.transform = 'scale(1)';
-    return;
-  }
-  lbZoomLevel = Math.min(4, Math.max(1, lbZoomLevel + delta));
-  isZoomed = lbZoomLevel > 1.05;
-  img.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-  img.style.transform = 'scale(' + lbZoomLevel + ')';
+// 触摸手势交互
+var touchStartX = 0;
+var touchStartY = 0;
+var isSwiping = false;
+
+if (lbModal) {
+  lbModal.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isSwiping = true;
+    }
+  }, { passive: true });
+
+  lbModal.addEventListener('touchmove', function(e) {
+    if (!isSwiping) return;
+    var dx = e.touches[0].clientX - touchStartX;
+    var dy = e.touches[0].clientY - touchStartY;
+    
+    if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+      lbImg.style.transform = 'translate3d(0, ' + dy + 'px, 0)';
+      lbModal.style.opacity = Math.max(0.2, 1 - dy / 300);
+    }
+  }, { passive: true });
+
+  lbModal.addEventListener('touchend', function(e) {
+    if (!isSwiping) return;
+    isSwiping = false;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+
+    if (dy > 100 && Math.abs(dy) > Math.abs(dx)) {
+      closeLightbox();
+    } else if (Math.abs(dx) > 50 && Math.abs(dy) < 40) {
+      lbNav(dx < 0 ? 1 : -1);
+    } else {
+      resetZoom();
+    }
+  });
 }
 
-// ── 手势：双击缩放 ──
-lbImg.addEventListener('dblclick', function(e) {
-  e.preventDefault();
-  isZoomed = !isZoomed;
-  lbZoomLevel = isZoomed ? 2.5 : 1;
-  this.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-  this.style.transformOrigin = 'center center';
-  this.style.transform = 'scale(' + lbZoomLevel + ')';
-});
-
-// ── 鼠标滚轮缩放（桌面端） ──
-lbImg.addEventListener('wheel', function(e) {
-  e.preventDefault();
-  var delta = e.deltaY > 0 ? -0.3 : 0.3;
-  lbZoomLevel = Math.min(4, Math.max(1, lbZoomLevel + delta));
-  isZoomed = lbZoomLevel > 1.05;
-  this.style.transition = 'transform 0.15s ease-out';
-  this.style.transformOrigin = 'center center';
-  this.style.transform = 'scale(' + lbZoomLevel + ')';
-}, { passive: false });
-
-// ── 手势：双指捏合缩放 ──
-var pinchStartDist = 0;
-var pinchStartScale = 1;
-
-lbImg.addEventListener('touchstart', function(e) {
-  if (e.touches.length === 2) {
-    pinchStartDist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    pinchStartScale = isZoomed ? 2.5 : 1;
-    this.style.transition = 'none';
+// 键盘事件
+document.addEventListener('keydown', function(e) {
+  if (lbModal && !lbModal.classList.contains('hidden')) {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'ArrowRight') lbNav(1);
   }
-}, { passive: true });
-
-lbImg.addEventListener('touchmove', function(e) {
-  if (e.touches.length === 2) {
-    e.preventDefault();
-    var dist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    lbZoomLevel = Math.min(4, Math.max(1, pinchStartScale * (dist / pinchStartDist)));
-    this.style.transform = 'scale(' + lbZoomLevel + ')';
-    isZoomed = lbZoomLevel > 1.1;
-  }
-}, { passive: false });
-
-lbImg.addEventListener('touchend', function() {
-  this.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-  if (!isZoomed) {
-    lbZoomLevel = 1;
-    this.style.transform = 'scale(1)';
-  }
-});
-
-// ── 手势：滑动切换 / 下滑关闭 ──
-var swipeStartY = 0;
-var swipeStartX = 0;
-var swiping = false;
-var lb = document.getElementById('lightbox');
-
-lb.addEventListener('touchstart', function(e) {
-  if (e.touches.length === 1) {
-    swipeStartX = e.touches[0].clientX;
-    swipeStartY = e.touches[0].clientY;
-    swiping = true;
-  }
-}, { passive: true });
-
-lb.addEventListener('touchmove', function(e) {
-  if (!swiping || isZoomed) return;
-  var dx = e.touches[0].clientX - swipeStartX;
-  var dy = e.touches[0].clientY - swipeStartY;
-  // 下滑拖拽（仅当垂直位移大于水平位移时）
-  if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-    lbImg.style.transform = 'translateY(' + dy + 'px)';
-    lbImg.style.transition = 'none';
-    lb.style.opacity = 1 - Math.min(dy / 200, 0.8);
-  }
-}, { passive: true });
-
-lb.addEventListener('touchend', function(e) {
-  if (!swiping) return;
-  swiping = false;
-  var dx = e.changedTouches[0].clientX - swipeStartX;
-  var dy = e.changedTouches[0].clientY - swipeStartY;
-
-  // 下滑关闭（超过 80px 阈值）
-  if (dy > 80 && Math.abs(dy) > Math.abs(dx) && !isZoomed) {
-    lbImg.style.transition = 'transform 0.3s ease-in';
-    lbImg.style.transform = 'translateY(100vh)';
-    lb.style.transition = 'opacity 0.3s ease-in';
-    lb.style.opacity = '0';
-    setTimeout(closeLightbox, 300);
-    return;
-  }
-
-  // 水平滑动切换（仅当垂直位移很小）
-  if (Math.abs(dx) > 50 && Math.abs(dy) < 30 && !isZoomed) {
-    lbNav(dx < 0 ? 1 : -1);
-  }
-
-  // 弹回原位
-  lbImg.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
-  lbImg.style.transform = isZoomed ? 'scale(' + lbZoomLevel + ')' : 'scale(1)';
-  lb.style.transition = 'opacity 0.3s ease';
-  lb.style.opacity = '1';
-});
-
-// ── 键盘 ESC / 方向键 ──
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeLightbox();
-  if (e.key === 'ArrowLeft') lbNav(-1);
-  if (e.key === 'ArrowRight') lbNav(1);
 });
 </script>
 {% endblock %}
