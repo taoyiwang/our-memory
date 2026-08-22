@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block body %}
-<div class="min-h-screen pb-24" x-data="{ content: {{ (event.content or '') | tojson }} }">
+<div class="min-h-screen pb-24" x-data='{ content: {{ (event.content or '') | tojson }} }'>
 
   <!-- 顶部导航：限制在 max-w-lg 内居中 -->
   <div class="sticky top-0 z-30 bg-gradient-to-b from-[#fcfaf6] via-[#fcfaf6]/90 to-transparent backdrop-blur-sm">
