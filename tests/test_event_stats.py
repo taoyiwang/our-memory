@@ -31,7 +31,7 @@ class EventStatsTests(unittest.TestCase):
             try:
                 conn.execute(
                     "INSERT INTO timeline (name, password_hash, created_at) VALUES (?, ?, ?)",
-                    ("我们的故事", "hash", now()),
+                    ("doubledate的冒险", "hash", now()),
                 )
                 conn.commit()
                 self.timeline_id = conn.execute(

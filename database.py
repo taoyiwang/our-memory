@@ -65,7 +65,7 @@ def seed_default_timeline():
         if row is None:
             conn.execute(
                 "INSERT INTO timeline (name, password_hash, cover_image, created_at) VALUES (?, ?, ?, ?)",
-                ("我们的故事", "", None, now()),
+                ("doubledate的冒险", "", None, now()),
             )
             conn.commit()
     finally:

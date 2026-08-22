@@ -1,5 +1,5 @@
 #!/bin/bash
-# 一键启动 —— 我们的故事
+# 一键启动 —— doubledate的冒险
 # 用法: ./start.sh              # 后台启动
 #       ./start.sh stop          # 停止
 #       ./start.sh restart       # 重启

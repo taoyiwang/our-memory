@@ -1,4 +1,4 @@
-# 我们的故事 · 私人共享回忆时间轴
+# doubledate的冒险 · 私人共享回忆时间轴
 
 一个私密的多人共享回忆时间轴网站。几个朋友共同维护一条时间轴，记录一起经历的重要事件，每个事件关联照片与文字；输入访问密码即可进入，像翻阅一本数字相册。
 
@@ -44,7 +44,7 @@ venv/Scripts/python app.py  # Windows
 
 打开 http://localhost:5000 ，默认访问密码 `123456`（可通过环境变量 `TIMELINE_PASSWORD` 修改）。
 
-> 注意：`app.py` 在启动时会自动建库并创建默认时间轴「我们的故事」，数据落在 `data/timeline.db`，照片落在 `data/photos/event_<id>/`。
+> 注意：`app.py` 在启动时会自动建库并创建默认时间轴「doubledate的冒险」，数据落在 `data/timeline.db`，照片落在 `data/photos/event_<id>/`。
 
 ### 一键重启
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 一键重启「我们的故事」开发服务器
+# 一键重启「doubledate的冒险」开发服务器
 # 用法: ./restart.sh        （在 Git Bash / WSL 中直接执行）
 #
 # 做的事：
