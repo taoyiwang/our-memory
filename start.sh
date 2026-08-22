@@ -88,4 +88,13 @@ nohup ./venv/bin/gunicorn \
     --pid "$PID_FILE" \
     app:app > /dev/null 2>&1 &
 
-echo "✅ 已后台启动 (PID: $(cat "$PID_FILE"))"
+# 用 shell 的 $! 记录 PID，比 gunicorn 写文件更快
+echo $! > "$PID_FILE"
+sleep 1
+
+if kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+    echo "✅ 已后台启动 (PID: $(cat "$PID_FILE"))"
+else
+    echo "❌ 启动失败，查看日志: tail -f /tmp/timeline.log"
+    exit 1
+fi
