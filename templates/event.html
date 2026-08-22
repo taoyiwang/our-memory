@@ -30,7 +30,7 @@
 {% endblock %}
 
 {% block body %}
-<div class="min-h-screen" x-data="{ openUpload: false }">
+<div class="min-h-screen" x-data="{ openUpload: false }" x-init="$watch('openUpload', val => { if(!val) document.querySelector('body').classList.remove('overflow-hidden') })">
 
   <!-- 顶部返回 -->
   <nav class="sticky top-0 z-30 flex items-center justify-between px-4 pt-4 pb-2
@@ -72,20 +72,25 @@
     </div>
     {% endif %}
 
-    <!-- 批量操作栏 -->
-    <div class="flex items-center justify-between mt-4 px-2" x-data="{ selectMode: false, selected: [] }" x-init="window.__photoSelect = selected">
+    <!-- 照片操作栏 -->
+    <div class="flex items-center justify-between mt-4 px-2" x-data>
       <div class="flex items-center gap-3">
-        <label class="flex items-center gap-1.5 text-sm text-ink-mute cursor-pointer select-none">
-          <input type="checkbox" x-model="selectMode" @change="if(!selectMode){selected=[];document.querySelectorAll('.photo-checkbox').forEach(c=>c.checked=false)}" class="w-4 h-4 rounded border-ink/20 text-accent focus:ring-0">
-          <span>选择模式</span>
-        </label>
-        <button x-show="selectMode && selected.length > 0"
-                @click="if(confirm('确定删除选中的 '+selected.length+' 张照片吗？')){document.getElementById('batch-delete-form').querySelectorAll('input[name=photo_ids]').forEach(el=>el.remove());selected.forEach(id=>{let inp=document.createElement('input');inp.type='hidden';inp.name='photo_ids';inp.value=id;document.getElementById('batch-delete-form').appendChild(inp)});document.getElementById('batch-delete-form').submit()}"
-                class="text-sm px-3 py-1.5 rounded-full bg-rose-500 text-white hover:bg-rose-600 transition">
-          删除所选 ({{ '{{ selected.length }}' }})
+        <!-- 选择模式开关（胶囊样式） -->
+        <button @click="$store.photoSelect.toggleMode()"
+                class="flex items-center gap-2 px-4 py-1.5 rounded-full border-2 transition-all duration-200 text-sm font-medium"
+                :class="$store.photoSelect.mode ? 'border-accent bg-accent/10 text-accent' : 'border-ink/10 bg-white/60 text-ink-mute hover:border-ink/20'">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <polyline points="9 12 12 15 21 6"/>
+          </svg>
+          <span x-text="$store.photoSelect.mode ? '退出选择' : '选择照片'"></span>
         </button>
       </div>
-      <span x-show="selectMode" class="text-xs text-ink-mute" x-text="selected.length + ' 张已选'"></span>
+      <!-- 已选数量 -->
+      <span x-show="$store.photoSelect.mode && $store.photoSelect.count > 0" class="text-sm text-ink-mute">
+        已选 <span class="font-medium text-accent" x-text="$store.photoSelect.count"></span> 张
+      </span>
+      <span x-show="$store.photoSelect.mode && $store.photoSelect.count === 0" class="text-sm text-ink-mute/50">点击照片选择</span>
     </div>
     <form id="batch-delete-form" method="post" action="{{ url_for('photo.batch_delete', event_id=event.id) }}" class="hidden">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -94,30 +99,43 @@
     <!-- 照片瀑布流（拍立得风格：图内嵌圆角 + 白边） -->
     <div class="masonry mt-4">
       {% for photo in photos %}
-      <div class="masonry-item polaroid rounded-2xl p-2 {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }} relative group"
-           style="--i: {{ loop.index0 }}">
-        <!-- 选择模式复选框 -->
-        <div class="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity photo-checkbox-wrapper" x-data="{ selectMode: window.__photoSelect ? window.__photoSelect.__x?.selectMode : false }" x-init="$watch('selectMode', val => { if(!val) $el.querySelector('.photo-checkbox').checked = false })">
-          <input type="checkbox" class="photo-checkbox w-4 h-4 rounded border-white/60 bg-ink/40 text-accent focus:ring-0"
-                 data-photo-id="{{ photo.id }}"
-                 x-model="window.__photoSelect"
-                 :checked="window.__photoSelect && window.__photoSelect.includes({{ photo.id }})"
-                 @change="if($event.target.checked){if(!window.__photoSelect.includes({{ photo.id }})) window.__photoSelect.push({{ photo.id }})}else{window.__photoSelect=window.__photoSelect.filter(id=>id!=={{ photo.id }})}">
+      <div class="masonry-item polaroid rounded-2xl p-2 {{ 'tilt-left' if loop.index0 % 2 == 0 else 'tilt-right' }} relative group transition-all duration-200"
+           style="--i: {{ loop.index0 }}"
+           :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'ring-2 ring-emerald-500/70 ring-offset-2 ring-offset-white' : ''"
+           x-data>
+        <!-- 选择模式复选框（选择模式下始终可见，非选择模式隐藏） -->
+        <div class="absolute top-2.5 left-2.5 z-10 transition-opacity duration-200"
+             :class="$store.photoSelect.mode ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+          <input type="checkbox" class="photo-checkbox w-6 h-6 rounded-lg border-2 border-white/80 bg-ink/30 text-emerald-500 focus:ring-2 focus:ring-emerald-400/50 cursor-pointer transition-all duration-150"
+                 :checked="$store.photoSelect.isSelected({{ photo.id }})"
+                 @change="$store.photoSelect.togglePhoto({{ photo.id }})">
         </div>
-        <!-- 单张删除按钮 -->
+        <!-- 选中遮罩 + ✓ 标记 -->
+        <div class="absolute inset-0 rounded-2xl transition-opacity duration-200 pointer-events-none"
+             :class="$store.photoSelect.isSelected({{ photo.id }}) ? 'opacity-100' : 'opacity-0'"
+             style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));">
+          <div class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+        <!-- 单张删除按钮（选择模式下隐藏） -->
         <button onclick="if(confirm('确定删除这张照片吗？')){document.getElementById('delete-form-{{ photo.id }}').submit()}"
-                class="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-ink/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500">
+                class="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-ink/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500"
+                :class="$store.photoSelect.mode ? 'opacity-0 pointer-events-none' : ''">
           <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
         <form id="delete-form-{{ photo.id }}" method="post" action="{{ url_for('photo.delete', photo_id=photo.id) }}" class="hidden">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         </form>
+        <!-- 点击照片切换选中（选择模式下）或打开 lightbox（非选择模式） -->
         <img src="{{ url_for('photo.serve_thumb', photo_id=photo.id) }}"
              data-full="{{ url_for('photo.serve', photo_id=photo.id) }}"
              data-photo-id="{{ photo.id }}"
              alt="{{ event.title }}"
              loading="lazy"
-             onclick="openLightbox(this)"
+             @click="$store.photoSelect.mode ? $store.photoSelect.togglePhoto({{ photo.id }}) : openLightbox(this)"
              class="w-full object-cover cursor-pointer hover:opacity-95 transition rounded-xl"
              style="min-height: 120px;">
         {% if event.event_date %}
@@ -135,24 +153,42 @@
 
   <!-- 底部操作栏 -->
   <div class="fixed bottom-0 inset-x-0 z-40 pb-safe">
-    <div class="bg-white/90 backdrop-blur-xl border-t border-ink/5">
+    <div class="bg-white/90 backdrop-blur-xl border-t border-ink/5 transition-all duration-300"
+         :class="$store.photoSelect.mode && $store.photoSelect.count > 0 ? 'border-emerald-500/30 shadow-[0_-4px_30px_rgba(16,185,129,0.1)]' : ''">
       <div class="max-w-3xl mx-auto px-5 py-3 flex items-center gap-3">
-        <button @click="openUpload = true"
-                class="flex-1 h-12 rounded-2xl bg-accent text-white font-medium shadow-[0_10px_30px_rgba(217,125,84,0.3)]
-                       active:scale-[0.98] transition-transform">
-          上传照片
-        </button>
+        <!-- 选择模式：批量删除按钮 -->
+        <template x-if="$store.photoSelect.mode && $store.photoSelect.count > 0">
+          <button @click="if(confirm('确定删除选中的 '+$store.photoSelect.count+' 张照片吗？')){document.getElementById('batch-delete-form').querySelectorAll('input[name=photo_ids]').forEach(el=>el.remove());$store.photoSelect.selected.forEach(id=>{let inp=document.createElement('input');inp.type='hidden';inp.name='photo_ids';inp.value=id;document.getElementById('batch-delete-form').appendChild(inp)});document.getElementById('batch-delete-form').submit()}"
+                  class="flex-1 h-12 rounded-2xl bg-rose-500 text-white font-medium shadow-[0_10px_30px_rgba(244,63,94,0.3)]
+                         active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>
+            </svg>
+            删除所选 <span class="font-semibold" x-text="$store.photoSelect.count"></span> 张
+          </button>
+        </template>
+        <!-- 非选择模式：上传按钮 -->
+        <template x-if="!$store.photoSelect.mode || $store.photoSelect.count === 0">
+          <button @click="openUpload = true"
+                  class="flex-1 h-12 rounded-2xl bg-accent text-white font-medium shadow-[0_10px_30px_rgba(217,125,84,0.3)]
+                         active:scale-[0.98] transition-transform">
+            上传照片
+          </button>
+        </template>
+        <!-- 编辑按钮 -->
         <a href="{{ url_for('event.edit', event_id=event.id) }}"
            class="w-12 h-12 rounded-2xl bg-white border border-ink/10 flex items-center justify-center
-                  text-ink-mute active:scale-90 transition-transform">
+                  text-ink-mute active:scale-90 transition-transform shrink-0">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
         </a>
+        <!-- 删除事件按钮 -->
         <button onclick="if(confirm('删除这个回忆吗？'))document.getElementById('delete-event-form').submit()"
                 class="w-12 h-12 rounded-2xl bg-white border border-ink/10 flex items-center justify-center
-                       text-ink-mute active:scale-90 transition-transform">
+                       text-ink-mute active:scale-90 transition-transform shrink-0"
+                :class="$store.photoSelect.mode && $store.photoSelect.count > 0 ? 'opacity-30 pointer-events-none' : ''">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
             <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path>
           </svg>
